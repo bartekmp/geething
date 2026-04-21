@@ -6,7 +6,8 @@
   "type": "module",
   "scripts": {
     "dev": "web-ext run --source-dir=src --firefox=firefox",
-    "build": "web-ext build --source-dir=src --overwrite-dest",
+    "seed": "node scripts/seed-dev.js",
+    "build": "web-ext build --source-dir=src --ignore-files background/dev-seed.js dev-mode.json shared/credentials.example.js --overwrite-dest",
     "lint": "eslint src/ tests/",
     "lint:fix": "eslint src/ tests/ --fix",
     "lint:ext": "web-ext lint --source-dir=src",

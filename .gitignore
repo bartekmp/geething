@@ -26,6 +26,9 @@ src/shared/credentials.js
 Thumbs.db
 desktop.ini
 
+# Dev seed flag — created by `npm run seed`, never commit
+src/dev-mode.json
+
 # Coverage
 coverage/
 
