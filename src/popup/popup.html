@@ -1,0 +1,101 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Geething</title>
+    <link rel="stylesheet" href="popup.css" />
+  </head>
+  <body>
+    <header class="topbar">
+      <div class="brand">
+        <img src="../icons/icon-32.png" alt="" width="20" height="20" />
+        <span>Geething</span>
+      </div>
+      <div class="topbar-actions">
+        <button
+          id="gmail-btn"
+          class="icon-btn"
+          title="Open Gmail inbox"
+          aria-label="Open Gmail inbox"
+          hidden
+        >
+          <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true" fill="currentColor">
+            <path
+              d="M20 4H4C2.9 4 2 4.9 2 6v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4-8 5-8-5V6l8 5 8-5v2z"
+            />
+          </svg>
+        </button>
+        <button
+          id="mark-all-btn"
+          class="icon-btn"
+          title="Mark all as read"
+          aria-label="Mark all as read"
+          hidden
+        >
+          <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true" fill="currentColor">
+            <path
+              d="M18 7l-1.41-1.41-6.34 6.34 1.41 1.41L18 7zm4.24-1.41L11.66 16.17 7.48 12l-1.41 1.41L11.66 19l12-12-1.42-1.41zM.41 13.41L6 19l1.41-1.41L1.83 12 .41 13.41z"
+            />
+          </svg>
+        </button>
+        <button id="refresh-btn" class="icon-btn" title="Refresh" aria-label="Refresh">
+          <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true" fill="currentColor">
+            <path d="M12 4V1L8 5l4 4V6a6 6 0 1 1-6 6H4a8 8 0 1 0 8-8z" />
+          </svg>
+        </button>
+        <button id="add-account-btn" class="icon-btn" title="Add account" aria-label="Add account">
+          <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true" fill="currentColor">
+            <path d="M11 11V5h2v6h6v2h-6v6h-2v-6H5v-2z" />
+          </svg>
+        </button>
+        <button id="options-btn" class="icon-btn" title="Settings" aria-label="Settings">
+          <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true" fill="currentColor">
+            <path
+              d="M12 8a4 4 0 1 0 0 8 4 4 0 0 0 0-8zm9.4 4.9l2.1 1.6-2 3.5-2.5-.8a7.9 7.9 0 0 1-2.2 1.3L16 22h-4l-.8-2.5a7.9 7.9 0 0 1-2.2-1.3l-2.5.8-2-3.5 2.1-1.6a8 8 0 0 1 0-2.6L2.5 9.7l2-3.5 2.5.8A7.9 7.9 0 0 1 9.2 5.7L10 3.2h4l.8 2.5a7.9 7.9 0 0 1 2.2 1.3l2.5-.8 2 3.5-2.1 1.6a8 8 0 0 1 0 2.6z"
+            />
+          </svg>
+        </button>
+        <a
+          id="info-btn"
+          href="https://github.com/bartekmp/geething"
+          target="_blank"
+          rel="noopener noreferrer"
+          class="icon-btn"
+          title="About / GitHub"
+          aria-label="About / GitHub"
+        >
+          <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true" fill="currentColor">
+            <path
+              d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"
+            />
+          </svg>
+        </a>
+      </div>
+    </header>
+
+    <nav id="account-tabs" class="account-tabs" role="tablist" aria-label="Gmail accounts"></nav>
+
+    <main id="content" class="content">
+      <div id="empty-state" class="empty-state" hidden>
+        <h2>Welcome to Geething</h2>
+        <p>Click <strong>+</strong> in the toolbar above to connect your first Gmail account.</p>
+      </div>
+      <div id="error-banner" class="error-banner" hidden></div>
+      <ul id="email-list" class="email-list" role="list"></ul>
+      <div id="loading" class="loading" hidden>
+        <span class="spinner" aria-hidden="true"></span>
+        <span>Loading…</span>
+      </div>
+    </main>
+
+    <section id="email-detail" class="email-detail" hidden aria-live="polite">
+      <div class="detail-topbar">
+        <button class="back-btn" id="back-btn" type="button">← Back</button>
+        <div id="detail-actions" class="detail-actions"></div>
+      </div>
+      <div id="detail-content" class="detail-scroll"></div>
+    </section>
+
+    <script type="module" src="popup.js"></script>
+  </body>
+</html>
