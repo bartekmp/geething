@@ -21,6 +21,10 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Write stub credentials for tests
+        run: |
+          echo "export const CLIENT_ID = 'ci-stub'; export const CLIENT_SECRET = 'ci-stub';" > src/shared/credentials.js
+
       - name: Lint
         run: npm run lint
 
