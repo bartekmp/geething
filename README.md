@@ -1,7 +1,10 @@
+<img src="src/icons/icon-96.png" alt="Geething" width="64" align="left" style="margin-right:16px" />
+
 # Geething
 
 A browser extension for multi-account Gmail notifications. Get a badge counter, desktop notifications with action buttons, and a full-featured popup — all without a backend server. Your data never leaves your device.
 
+<br clear="left" />
 
 ## Features
 
@@ -14,6 +17,10 @@ A browser extension for multi-account Gmail notifications. Get a badge counter, 
 - **Notification sound** — built-in chime or upload your own (MP3/WAV/OGG, max 5 s)
 - **Themes** — light, dark, or auto (follows system preference)
 - **Configurable** — poll interval (1–30 min), max messages shown, popup width, and more
+
+| Popup | Settings |
+|-------|---------|
+| ![Popup window](docs/geething-main.png) | ![Settings page](docs/geething-settings.png) |
 
 ## Installation
 

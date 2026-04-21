@@ -6,7 +6,6 @@ on:
 
 jobs:
   publish:
-    if: false  # disabled until AMO secrets are configured
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -19,6 +18,16 @@ jobs:
 
       - name: Install dependencies
         run: npm ci
+
+      - name: Write OAuth credentials
+        env:
+          CLIENT_ID: ${{ secrets.GOOGLE_CLIENT_ID }}
+          CLIENT_SECRET: ${{ secrets.GOOGLE_CLIENT_SECRET }}
+        run: |
+          cat > src/shared/credentials.js <<EOF
+          export const CLIENT_ID = '${CLIENT_ID}';
+          export const CLIENT_SECRET = '${CLIENT_SECRET}';
+          EOF
 
       - name: Run tests
         run: npm test
