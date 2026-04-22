@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   registerNotificationClickHandler,
+  showGroupedMailNotification,
   showNewMailNotification,
   __testing__,
 } from '../../src/background/notifications.js';
@@ -71,6 +72,40 @@ describe('notifications / showNewMailNotification', () => {
     expect(notificationId.startsWith('geething:')).toBe(true);
     expect(options.type).toBe('basic');
     expect(options.title).toContain('Bob');
+  });
+});
+
+describe('notifications / showGroupedMailNotification', () => {
+  const account = { id: 'a', email: 'me@x.com', label: 'Me' };
+  const messages = [
+    { id: 'm1', subject: 'First', from: { name: 'A', email: 'a@x' } },
+    { id: 'm2', subject: 'Second', from: { name: 'B', email: 'b@x' } },
+    { id: 'm3', subject: 'Third', from: { name: 'C', email: 'c@x' } },
+  ];
+
+  it('skips when notifications disabled', async () => {
+    const id = await showGroupedMailNotification(messages, account, {
+      notificationsEnabled: false,
+    });
+    expect(id).toBeNull();
+    expect(browser.notifications.create).not.toHaveBeenCalled();
+  });
+
+  it('creates one notification mentioning message count', async () => {
+    await showGroupedMailNotification(messages, account, { notificationsEnabled: true });
+    expect(browser.notifications.create).toHaveBeenCalledOnce();
+    const [, options] = browser.notifications.create.mock.calls[0];
+    expect(options.title).toContain('3');
+    expect(options.message).toContain('First');
+    expect(options.message).toContain('Second');
+  });
+
+  it('caps body at 3 subjects even with more messages', async () => {
+    const many = Array.from({ length: 6 }, (_, i) => ({ id: `m${i}`, subject: `Msg ${i}` }));
+    await showGroupedMailNotification(many, account, { notificationsEnabled: true });
+    const [, options] = browser.notifications.create.mock.calls[0];
+    // Body is subjects joined by \n — only first 3 lines
+    expect(options.message.split('\n')).toHaveLength(3);
   });
 });
 

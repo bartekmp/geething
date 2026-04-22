@@ -55,6 +55,14 @@
           </div>
         </div>
         <p id="sound-status" class="status" hidden></p>
+        <div id="test-notification-row" class="row" hidden>
+          <span
+            >Send a test notification<br /><small class="muted"
+              >Visible in development builds only</small
+            ></span
+          >
+          <button id="test-notification" type="button" class="btn btn-ghost">Test</button>
+        </div>
       </section>
 
       <section class="card">
@@ -87,6 +95,45 @@
           <span>Popup width: <output id="popupWidthValue">560</output> px</span>
           <input id="popupWidth" type="range" min="400" max="800" step="20" />
         </label>
+      </section>
+
+      <section class="card">
+        <h2>Keyboard Shortcuts</h2>
+        <p class="muted shortcuts-note">
+          Active in the popup when focus is not on a button or input.
+        </p>
+        <table class="shortcuts-table">
+          <tbody>
+            <tr>
+              <td><kbd>j</kbd> / <kbd>↓</kbd></td>
+              <td>Next email</td>
+            </tr>
+            <tr>
+              <td><kbd>k</kbd> / <kbd>↑</kbd></td>
+              <td>Previous email</td>
+            </tr>
+            <tr>
+              <td><kbd>Enter</kbd></td>
+              <td>Open email detail</td>
+            </tr>
+            <tr>
+              <td><kbd>Escape</kbd></td>
+              <td>Close detail / close popup</td>
+            </tr>
+            <tr>
+              <td><kbd>r</kbd></td>
+              <td>Mark focused email as read</td>
+            </tr>
+            <tr>
+              <td><kbd>a</kbd></td>
+              <td>Archive focused email</td>
+            </tr>
+            <tr>
+              <td><kbd>o</kbd></td>
+              <td>Open focused email in Gmail</td>
+            </tr>
+          </tbody>
+        </table>
       </section>
 
       <section class="card">

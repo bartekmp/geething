@@ -103,17 +103,36 @@ export function registerNotificationClickHandler(handler) {
   });
 }
 
-// Service workers can't use Web Audio. We set a pending-sound flag in storage
-// so the popup plays it when open (immediately via message) or on next open.
+// MV3 service workers have no audio API. Strategy:
+// 1. If the popup is already open, send it a message to play immediately.
+// 2. Set a pending-sound flag so the popup plays the sound the next time it
+//    is opened (boot sequence reads this flag via checkPendingSound).
 export async function playNotificationSound() {
   await setPendingSound();
-  try {
-    api.runtime.sendMessage({ type: 'geething.playSound' }).catch(() => {
-      // Popup not open — sound will play when it next opens.
-    });
-  } catch {
-    // ignore
+  api.runtime.sendMessage({ type: 'geething.playSound' }).catch(() => {});
+}
+
+export async function showGroupedMailNotification(messages, account, settings) {
+  if (!settings.notificationsEnabled) {
+    return null;
   }
+  const notificationId = `${NOTIFICATION_PREFIX}${account.id}|__group__`;
+  const title = `${account.label || account.email}: ${messages.length} new messages`;
+  const body = messages
+    .slice(0, 3)
+    .map((m) => m.subject || '(no subject)')
+    .join('\n');
+  try {
+    await api.notifications.create(notificationId, {
+      type: 'basic',
+      iconUrl: api.runtime.getURL('icons/icon-96.png'),
+      title,
+      message: body,
+    });
+  } catch (err) {
+    console.warn('Grouped notification create failed:', err);
+  }
+  return notificationId;
 }
 
 export function __testing__() {

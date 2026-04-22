@@ -26,8 +26,10 @@ const els = {
   backBtn: document.getElementById('back-btn'),
   refreshBtn: document.getElementById('refresh-btn'),
   gmailBtn: document.getElementById('gmail-btn'),
+  composeBtn: document.getElementById('compose-btn'),
   markAllBtn: document.getElementById('mark-all-btn'),
   addBtn: document.getElementById('add-account-btn'),
+  onboardingAddBtn: document.getElementById('onboarding-add-btn'),
   optionsBtn: document.getElementById('options-btn'),
 };
 
@@ -148,8 +150,16 @@ function updateGmailBtn() {
         url: `https://mail.google.com/mail/?authuser=${encodeURIComponent(account.email)}`,
       });
     };
+    els.composeBtn.hidden = false;
+    els.composeBtn.onclick = () => {
+      api.tabs.create({
+        url: `https://mail.google.com/mail/?authuser=${encodeURIComponent(account.email)}&view=cm`,
+      });
+      window.close();
+    };
   } else {
     els.gmailBtn.hidden = true;
+    els.composeBtn.hidden = true;
   }
 }
 
@@ -258,6 +268,8 @@ function renderEmailItem(account, message) {
   li.className = 'email-item';
   li.style.borderLeftColor = account.color || 'transparent';
   li.tabIndex = 0;
+  li.dataset.accountId = account.id;
+  li.dataset.messageId = message.id;
 
   const row = document.createElement('div');
   row.className = 'email-row';
@@ -491,7 +503,6 @@ async function refresh({ silent = false } = {}) {
     }
     await sendMessage({ type: 'geething.refresh' });
     await loadState();
-    await checkPendingSound();
   } catch (err) {
     showError(err.message || String(err));
   } finally {
@@ -570,8 +581,7 @@ function stopLivePoll() {
 // Message from background when new mail arrives while popup is open.
 api.runtime.onMessage.addListener((msg) => {
   if (msg?.type === 'geething.playSound') {
-    playSound();
-    clearPendingSound();
+    clearPendingSound().then(() => playSound());
   }
   if (msg?.type === 'geething.newMail') {
     refresh({ silent: true });
@@ -583,6 +593,97 @@ window.addEventListener('unload', stopLivePoll);
 watchSystemTheme(() => {
   if (state.settings?.theme === 'auto') {
     applyTheme('auto');
+  }
+});
+
+// ── Onboarding ────────────────────────────────────────────────────────────
+els.onboardingAddBtn.addEventListener('click', () => els.addBtn.click());
+
+// ── Keyboard navigation ───────────────────────────────────────────────────
+function getEmailItems() {
+  return Array.from(els.list.querySelectorAll('.email-item'));
+}
+
+document.addEventListener('keydown', (e) => {
+  const tag = e.target.tagName;
+  if (
+    tag === 'INPUT' ||
+    tag === 'TEXTAREA' ||
+    tag === 'SELECT' ||
+    tag === 'BUTTON' ||
+    tag === 'A'
+  ) {
+    return;
+  }
+
+  if (!els.detail.hidden) {
+    if (e.key === 'Escape') {
+      e.preventDefault();
+      els.detail.hidden = true;
+      document.activeElement?.blur();
+    }
+    return;
+  }
+
+  const items = getEmailItems();
+  const current = items.indexOf(document.activeElement);
+
+  switch (e.key) {
+    case 'j':
+    case 'ArrowDown': {
+      e.preventDefault();
+      const next = current >= 0 ? Math.min(current + 1, items.length - 1) : 0;
+      items[next]?.focus();
+      break;
+    }
+    case 'k':
+    case 'ArrowUp': {
+      e.preventDefault();
+      const prev = current > 0 ? current - 1 : 0;
+      items[prev]?.focus();
+      break;
+    }
+    case 'Enter': {
+      if (current < 0) {
+        break;
+      }
+      items[current].click();
+      break;
+    }
+    case 'Escape':
+      window.close();
+      break;
+    case 'r': {
+      if (current < 0) {
+        break;
+      }
+      const { accountId, messageId } = items[current].dataset;
+      if (accountId && messageId) {
+        performAction(accountId, messageId, 'markRead');
+      }
+      break;
+    }
+    case 'a': {
+      if (current < 0) {
+        break;
+      }
+      const { accountId, messageId } = items[current].dataset;
+      if (accountId && messageId) {
+        performAction(accountId, messageId, 'archive');
+      }
+      break;
+    }
+    case 'o': {
+      if (current < 0) {
+        break;
+      }
+      const { accountId, messageId } = items[current].dataset;
+      const account = state.accounts.find((acc) => acc.id === accountId);
+      if (account && messageId) {
+        openInGmail(account, messageId);
+      }
+      break;
+    }
   }
 });
 

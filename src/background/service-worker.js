@@ -21,6 +21,7 @@ import {
   playNotificationSound,
   registerNotificationButtonHandler,
   registerNotificationClickHandler,
+  showGroupedMailNotification,
   showNewMailNotification,
 } from './notifications.js';
 import {
@@ -70,12 +71,13 @@ async function pollAccount(account, { isInitial = false } = {}) {
     }
 
     const settings = await getSettings();
-    if (!account.muted) {
-      for (const message of newMessages) {
-        await showNewMailNotification(message, account, settings);
+    if (!account.muted && newMessages.length > 0) {
+      if (newMessages.length === 1) {
+        await showNewMailNotification(newMessages[0], account, settings);
+      } else {
+        await showGroupedMailNotification(newMessages, account, settings);
       }
-      // Sound is independent of OS notification success — play once per poll cycle.
-      if (newMessages.length > 0 && settings.notificationSound) {
+      if (settings.notificationSound) {
         await playNotificationSound();
       }
     }
@@ -222,6 +224,24 @@ async function handleMessage(msg, _sender) {
       await rescheduleAlarm();
       return { ok: true };
     }
+    case 'geething.testNotification': {
+      const settings = await getSettings();
+      await showNewMailNotification(
+        {
+          id: 'test',
+          subject: 'Test notification from Geething',
+          snippet: 'If you see this, desktop notifications are working.',
+          from: { name: 'Geething', email: 'geething@test' },
+          internalDate: Date.now(),
+        },
+        { id: 'test', email: 'test@geething', label: 'Test' },
+        { ...settings, notificationsEnabled: true },
+      );
+      if (settings.notificationSound) {
+        await playNotificationSound();
+      }
+      return { ok: true };
+    }
     default:
       return undefined;
   }
@@ -267,7 +287,7 @@ function attachListeners() {
 
   api.runtime.onStartup?.addListener?.(async () => {
     await rescheduleAlarm();
-    await pollAllAccounts({ isInitial: true });
+    await pollAllAccounts();
   });
 
   api.alarms.onAlarm.addListener((alarm) => {
@@ -337,7 +357,7 @@ attachListeners();
       accountState.set(id, state);
     }
     await rescheduleAlarm();
-    await pollAllAccounts({ isInitial: true });
+    await pollAllAccounts();
   } catch (err) {
     console.warn('Initial poll failed:', err);
   }

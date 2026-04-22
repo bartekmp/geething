@@ -25,9 +25,11 @@ const DEV_SW = `// DEV ONLY — lives only in .dev-src/, never part of the produ
 import { getSettings, saveAccounts, savePersistedAccountState } from '../shared/storage.js';
 import { ACCOUNTS, buildMessages } from './dev-seed.js';
 import { updateBadge } from './badge.js';
+import { showNewMailNotification, playNotificationSound } from './notifications.js';
 
 const api = typeof browser !== 'undefined' ? browser : globalThis.chrome;
 const accountState = new Map();
+let refreshCount = 0;
 
 async function seed() {
   const msgs = buildMessages();
@@ -61,8 +63,22 @@ async function handleMessage(msg) {
       }));
       return { accounts, settings };
     }
-    case 'geething.refresh':
+    case 'geething.refresh': {
+      refreshCount++;
+      const settings = await getSettings();
+      const msgs = buildMessages();
+      const accountEntries = Object.entries(msgs);
+      const [accountId, messages] = accountEntries[refreshCount % accountEntries.length];
+      const account = ACCOUNTS.find((a) => a.id === accountId) || ACCOUNTS[0];
+      const message = messages[refreshCount % messages.length];
+      if (!account.muted) {
+        await showNewMailNotification(message, account, settings);
+        if (settings.notificationSound) {
+          await playNotificationSound();
+        }
+      }
       return { total: Array.from(accountState.values()).reduce((s, a) => s + a.unreadCount, 0) };
+    }
     case 'geething.getMessageDetail': {
       for (const { messages } of accountState.values()) {
         const found = messages?.find((m) => m.id === msg.messageId);
