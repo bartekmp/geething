@@ -1,6 +1,13 @@
 import { ALARM_NAMES } from '../shared/constants.js';
-import { getSeenMessages, getSettings, saveSeenMessages } from '../shared/storage.js';
 import {
+  getPersistedAccountState,
+  getSeenMessages,
+  getSettings,
+  savePersistedAccountState,
+  saveSeenMessages,
+} from '../shared/storage.js';
+import {
+  AuthError,
   addAccount,
   getAccountById,
   getAccounts,
@@ -80,7 +87,11 @@ async function pollAccount(account, { isInitial = false } = {}) {
     return { count: ids.length, new: newMessages.length };
   } catch (err) {
     console.warn(`Poll failed for account ${account.email}:`, err);
-    setAccountState(account.id, { error: err.message || String(err), lastPolledAt: Date.now() });
+    setAccountState(account.id, {
+      error: err.message || String(err),
+      needsReauth: err instanceof AuthError,
+      lastPolledAt: Date.now(),
+    });
     return { count: 0, new: 0, error: err.message };
   }
 }
@@ -104,6 +115,8 @@ async function pollAllAccounts({ isInitial = false } = {}) {
   } else {
     await clearBadge();
   }
+  // Persist so the popup sees correct state immediately after SW restart.
+  await savePersistedAccountState(Object.fromEntries(accountState));
   return total;
 }
 
@@ -144,6 +157,17 @@ async function handleMessage(msg, _sender) {
     }
     case 'geething.addAccount': {
       const acc = await addAccount();
+      await pollAccount(acc, { isInitial: true });
+      return { account: acc };
+    }
+    case 'geething.reauthorizeAccount': {
+      const existing = await getAccountById(msg.accountId);
+      const acc = await addAccount({ loginHint: existing?.email });
+      setAccountState(acc.id, {
+        ...(accountState.get(acc.id) || {}),
+        needsReauth: false,
+        error: null,
+      });
       await pollAccount(acc, { isInitial: true });
       return { account: acc };
     }
@@ -302,16 +326,13 @@ attachListeners();
 // Kick off an initial poll shortly after worker boot.
 (async () => {
   try {
+    // Restore last-known state so the popup responds before the first poll completes.
+    const persisted = await getPersistedAccountState();
+    for (const [id, state] of Object.entries(persisted)) {
+      accountState.set(id, state);
+    }
     await rescheduleAlarm();
     await pollAllAccounts({ isInitial: true });
-    // Dev seed: only active when `npm run seed` has written dev-mode.json.
-    // The module is never loaded in production because the dynamic import
-    // only runs when the file is present.
-    const devCheck = await fetch(api.runtime.getURL('dev-mode.json')).catch(() => null);
-    if (devCheck?.ok) {
-      const { seedDevData } = await import('./dev-seed.js');
-      await seedDevData(setAccountState);
-    }
   } catch (err) {
     console.warn('Initial poll failed:', err);
   }

@@ -17,6 +17,7 @@ export const STORAGE_KEYS = Object.freeze({
   SETTINGS: 'settings',
   UNREAD_CACHE: 'unreadCache',
   SEEN_MESSAGES: 'seenMessages',
+  ACCOUNT_STATE: 'accountState',
 });
 
 export const ALARM_NAMES = Object.freeze({

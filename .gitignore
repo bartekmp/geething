@@ -26,8 +26,8 @@ src/shared/credentials.js
 Thumbs.db
 desktop.ini
 
-# Dev seed flag — created by `npm run seed`, never commit
-src/dev-mode.json
+# Dev overlay directory — created by `npm run seed`, destroyed on exit
+.dev-src/
 
 # Coverage
 coverage/

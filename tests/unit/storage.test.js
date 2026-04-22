@@ -3,10 +3,12 @@ import {
   clearAccountData,
   deleteTokens,
   getAccounts,
+  getPersistedAccountState,
   getSeenMessages,
   getSettings,
   getTokens,
   saveAccounts,
+  savePersistedAccountState,
   saveSeenMessages,
   saveSettings,
   saveTokens,
@@ -54,6 +56,27 @@ describe('storage', () => {
     // Oldest should have been dropped.
     expect(read.has('msg-0')).toBe(false);
     expect(read.has('msg-599')).toBe(true);
+  });
+
+  it('getPersistedAccountState returns empty object when nothing stored', async () => {
+    expect(await getPersistedAccountState()).toEqual({});
+  });
+
+  it('savePersistedAccountState and retrieve round-trips correctly', async () => {
+    const state = {
+      'acc-1': { unreadCount: 3, messages: [{ id: 'm1' }], error: null, lastPolledAt: 12345 },
+      'acc-2': { unreadCount: 0, messages: [], error: 'oops', lastPolledAt: 99999 },
+    };
+    await savePersistedAccountState(state);
+    expect(await getPersistedAccountState()).toEqual(state);
+  });
+
+  it('savePersistedAccountState overwrites previous state', async () => {
+    await savePersistedAccountState({ 'acc-1': { unreadCount: 5 } });
+    await savePersistedAccountState({ 'acc-2': { unreadCount: 2 } });
+    const result = await getPersistedAccountState();
+    expect(result['acc-1']).toBeUndefined();
+    expect(result['acc-2'].unreadCount).toBe(2);
   });
 
   it('clearAccountData removes tokens and seen messages for an account', async () => {

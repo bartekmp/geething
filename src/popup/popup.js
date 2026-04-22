@@ -196,6 +196,28 @@ function getActiveAccount() {
   return state.accounts.find((a) => a.id === state.activeAccountId) || null;
 }
 
+function showReauthBanner(account) {
+  clearNode(els.error);
+  els.error.hidden = false;
+  const msg = document.createElement('span');
+  msg.textContent = `${account.email}: authorization expired. `;
+  const btn = document.createElement('button');
+  btn.type = 'button';
+  btn.textContent = 'Re-authorize';
+  btn.addEventListener('click', async () => {
+    try {
+      setLoading(true);
+      await sendMessage({ type: 'geething.reauthorizeAccount', accountId: account.id });
+      await loadState();
+    } catch (err) {
+      showError(err.message || String(err));
+    } finally {
+      setLoading(false);
+    }
+  });
+  els.error.append(msg, btn);
+}
+
 function renderList() {
   clearNode(els.list);
   const account = getActiveAccount();
@@ -207,7 +229,10 @@ function renderList() {
   if (!account) {
     return;
   }
-  if (account.error) {
+  if (account.needsReauth) {
+    showError(null);
+    showReauthBanner(account);
+  } else if (account.error) {
     showError(`${account.email}: ${account.error}`);
   } else {
     showError(null);
@@ -488,13 +513,16 @@ async function playSound() {
   playBeep();
 }
 
-function playBeep() {
+async function playBeep() {
   try {
     const AudioCtx = window.AudioContext || window.webkitAudioContext;
     if (!AudioCtx) {
       return;
     }
     const ctx = new AudioCtx();
+    if (ctx.state === 'suspended') {
+      await ctx.resume();
+    }
     const osc = ctx.createOscillator();
     const gain = ctx.createGain();
     osc.type = 'sine';

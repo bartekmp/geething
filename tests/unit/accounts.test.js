@@ -10,6 +10,7 @@ vi.mock('../../src/background/auth.js', () => {
 });
 
 import {
+  AuthError,
   addAccount,
   getAccounts,
   getValidAccessToken,
@@ -101,6 +102,41 @@ describe('accounts', () => {
     const token = await getValidAccessToken('a1');
     expect(token).toBe('cached');
     expect(authMod.refreshAccessToken).not.toHaveBeenCalled();
+  });
+
+  it('getValidAccessToken throws AuthError when token refresh is rejected by Google', async () => {
+    await saveTokens('a1', {
+      accessToken: 'stale',
+      refreshToken: 'bad-refresh',
+      expiresAt: Date.now() - 1000,
+    });
+    authMod.refreshAccessToken.mockRejectedValue(
+      new Error('Token refresh failed: 400 {"error":"invalid_grant"}'),
+    );
+    await expect(getValidAccessToken('a1')).rejects.toThrow(AuthError);
+    await expect(getValidAccessToken('a1')).rejects.toMatchObject({ isAuthError: true });
+  });
+
+  it('getValidAccessToken re-throws non-auth errors (e.g. network failure)', async () => {
+    await saveTokens('a1', {
+      accessToken: 'stale',
+      refreshToken: 'rr',
+      expiresAt: Date.now() - 1000,
+    });
+    authMod.refreshAccessToken.mockRejectedValue(new Error('Failed to fetch'));
+    await expect(getValidAccessToken('a1')).rejects.toThrow('Failed to fetch');
+    await expect(getValidAccessToken('a1')).rejects.not.toThrow(AuthError);
+  });
+
+  it('addAccount passes loginHint to launchOAuth', async () => {
+    authMod.launchOAuth.mockResolvedValue({
+      tokens: { accessToken: 'a', refreshToken: 'r', expiresAt: Date.now() + 3600_000 },
+      userInfo: { email: 'hint@example.com' },
+    });
+    await addAccount({ loginHint: 'hint@example.com' });
+    expect(authMod.launchOAuth).toHaveBeenCalledWith(
+      expect.objectContaining({ loginHint: 'hint@example.com' }),
+    );
   });
 
   it('getValidAccessToken refreshes when expired', async () => {
