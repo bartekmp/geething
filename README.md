@@ -69,6 +69,17 @@ npm run build        # produces a .zip in web-ext-artifacts/
 - OAuth tokens are stored only in your browser's local extension storage (encrypted at rest by Firefox).
 - Email content is fetched directly from Google's API and never transmitted anywhere else.
 
+### Why OAuth instead of browser cookies?
+
+Some Gmail extensions (including the popular [Checker Plus for Gmail](https://jasonsavard.com/Checker-Plus-for-Gmail)) discover your accounts automatically by reading your browser's active Google session cookies. That approach is convenient, but comes with trade-offs.
+
+Geething authenticates each account explicitly through Google's OAuth 2.0 flow instead:
+
+- **Works independently of your browser session** — tokens persist across restarts, cookie clears, and incognito windows. Cookie-based extensions stop working the moment you sign out of Google in your browser.
+- **Official API only** — the session-cookie approach relies on undocumented Google internal endpoints that can change without notice. Geething uses only the published Gmail API.
+- **Minimal, declared scope** — you grant exactly the permissions the extension needs (read-only access to your inbox). Cookie access gives the extension implicit access to your full authenticated Google session.
+- **Revocable at any time** — you can revoke Geething's access per-account from [Google Account → Security → Third-party access](https://myaccount.google.com/permissions), independently of your browser or the extension itself.
+
 ## License
 
 GPL-3.0 — see [LICENSE](LICENSE).
