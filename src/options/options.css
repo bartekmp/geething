@@ -304,6 +304,66 @@ input[type='checkbox'] {
   font-size: 12px;
 }
 
+.account-row-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--bg-primary);
+}
+
+.account-row-wrap .account-row {
+  border: none;
+  border-radius: 0;
+  background: transparent;
+}
+
+.account-labels-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 5px 10px 7px 42px;
+  border-top: 1px solid var(--border);
+  background: transparent;
+}
+
+.labels-caption {
+  color: var(--text-muted);
+  font-size: 11px;
+}
+
+.label-chip {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  color: var(--text-secondary);
+  cursor: pointer;
+  user-select: none;
+}
+
+.label-chip input[type='checkbox'] {
+  width: 13px;
+  height: 13px;
+}
+
+.mute-toggle {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+  color: var(--text-secondary);
+  cursor: pointer;
+  user-select: none;
+  flex-shrink: 0;
+}
+
+.mute-toggle input[type='checkbox'] {
+  width: 13px;
+  height: 13px;
+}
+
 .status {
   color: var(--danger);
   font-size: 12px;

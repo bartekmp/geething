@@ -48,9 +48,12 @@ async function gmailFetch(accessToken, path, { method = 'GET', body, query } = {
   return response.json();
 }
 
-export async function fetchUnreadMessageIds(accessToken, { maxResults = 20 } = {}) {
+export async function fetchUnreadMessageIds(
+  accessToken,
+  { maxResults = 20, labelIds = ['INBOX'] } = {},
+) {
   const data = await gmailFetch(accessToken, '/users/me/messages', {
-    query: { q: 'is:unread in:inbox -category:promotions -category:social', maxResults },
+    query: { q: 'is:unread', labelIds, maxResults },
   });
   return (data.messages || []).map((m) => m.id);
 }

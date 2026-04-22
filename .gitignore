@@ -35,3 +35,6 @@ coverage/
 # Logs
 *.log
 npm-debug.log*
+
+# Local task list
+TODO.md

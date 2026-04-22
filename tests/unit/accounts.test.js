@@ -82,6 +82,22 @@ describe('accounts', () => {
     expect(updated.email).toBe('x@y');
   });
 
+  it('updateAccount persists muted flag', async () => {
+    await saveAccounts([{ id: 'a1', email: 'x@y', muted: false }]);
+    const updated = await updateAccount('a1', { muted: true });
+    expect(updated.muted).toBe(true);
+    const [stored] = await getAccounts();
+    expect(stored.muted).toBe(true);
+  });
+
+  it('updateAccount persists watchedLabels and rejects empty array', async () => {
+    await saveAccounts([{ id: 'a1', email: 'x@y' }]);
+    const updated = await updateAccount('a1', { watchedLabels: ['INBOX', 'STARRED'] });
+    expect(updated.watchedLabels).toEqual(['INBOX', 'STARRED']);
+    const noChange = await updateAccount('a1', { watchedLabels: [] });
+    expect(noChange.watchedLabels).toEqual(['INBOX', 'STARRED']);
+  });
+
   it('reorderAccounts reflects the new order', async () => {
     await saveAccounts([
       { id: 'a', email: 'a@x', color: '#1' },

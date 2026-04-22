@@ -107,7 +107,23 @@ describe('gmail-api / HTTP helpers', () => {
     expect(url).toContain('/users/me/messages');
     expect(url).toContain('q=is%3Aunread');
     expect(url).toContain('maxResults=5');
+    expect(url).toContain('labelIds=INBOX');
     expect(init.headers.Authorization).toBe('Bearer token');
+  });
+
+  it('fetchUnreadMessageIds sends custom labelIds as repeated params', async () => {
+    mockOk({ messages: [{ id: 'x' }] });
+    await fetchUnreadMessageIds('token', { labelIds: ['STARRED', 'IMPORTANT'] });
+    const [url] = globalThis.fetch.mock.calls[0];
+    expect(url).toContain('labelIds=STARRED');
+    expect(url).toContain('labelIds=IMPORTANT');
+    expect(url).not.toContain('labelIds=INBOX');
+  });
+
+  it('fetchUnreadMessageIds returns empty array when no messages', async () => {
+    mockOk({});
+    const ids = await fetchUnreadMessageIds('token');
+    expect(ids).toEqual([]);
   });
 
   it('fetches full message detail', async () => {
