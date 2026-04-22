@@ -1,12 +1,12 @@
 import { saveAccounts } from '../shared/storage.js';
 import { updateBadge } from './badge.js';
 
-const ACCOUNTS = [
+export const ACCOUNTS = [
   { id: 'dev-1', email: 'alice@gmail.com', label: 'Personal', color: '#4f8cff' },
   { id: 'dev-2', email: 'alice.work@gmail.com', label: 'Work', color: '#ff7a59' },
 ];
 
-function buildMessages() {
+export function buildMessages() {
   const t = Date.now();
   return {
     'dev-1': [

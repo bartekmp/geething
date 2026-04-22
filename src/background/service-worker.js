@@ -333,14 +333,6 @@ attachListeners();
     }
     await rescheduleAlarm();
     await pollAllAccounts({ isInitial: true });
-    // Dev seed: only active when `npm run seed` has written dev-mode.json.
-    // The module is never loaded in production because the dynamic import
-    // only runs when the file is present.
-    const devCheck = await fetch(api.runtime.getURL('dev-mode.json')).catch(() => null);
-    if (devCheck?.ok) {
-      const { seedDevData } = await import('./dev-seed.js');
-      await seedDevData(setAccountState);
-    }
   } catch (err) {
     console.warn('Initial poll failed:', err);
   }
