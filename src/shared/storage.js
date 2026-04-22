@@ -96,6 +96,15 @@ export async function clearPendingSound() {
   await localArea().remove('pendingSound');
 }
 
+export async function getPersistedAccountState() {
+  const result = await localArea().get(STORAGE_KEYS.ACCOUNT_STATE);
+  return result[STORAGE_KEYS.ACCOUNT_STATE] || {};
+}
+
+export async function savePersistedAccountState(stateObj) {
+  await localArea().set({ [STORAGE_KEYS.ACCOUNT_STATE]: stateObj });
+}
+
 export async function clearAccountData(accountId) {
   await deleteTokens(accountId);
   const result = await localArea().get(STORAGE_KEYS.SEEN_MESSAGES);

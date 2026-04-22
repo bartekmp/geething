@@ -10,6 +10,14 @@ import { launchOAuth, refreshAccessToken, revokeToken } from './auth.js';
 
 const TOKEN_SKEW_MS = 60 * 1000; // Refresh 60s before expiry.
 
+export class AuthError extends Error {
+  constructor(message) {
+    super(message);
+    this.name = 'AuthError';
+    this.isAuthError = true;
+  }
+}
+
 function generateId() {
   if (typeof crypto !== 'undefined' && crypto.randomUUID) {
     return crypto.randomUUID();
@@ -34,8 +42,8 @@ export async function getAccountById(id) {
   return list.find((a) => a.id === id) || null;
 }
 
-export async function addAccount() {
-  const { tokens, userInfo } = await launchOAuth();
+export async function addAccount({ loginHint } = {}) {
+  const { tokens, userInfo } = await launchOAuth({ loginHint });
   const accounts = await readAccounts();
   const existing = accounts.find((a) => a.email === userInfo.email);
   if (existing) {
@@ -121,10 +129,19 @@ export async function getValidAccessToken(accountId) {
   if (!tokens.refreshToken) {
     throw new Error(`Access token expired and no refresh token available for ${accountId}`);
   }
-  const refreshed = await refreshAccessToken({
-    refreshToken: tokens.refreshToken,
-    clientId: (await import('../shared/constants.js')).CLIENT_ID,
-  });
+  let refreshed;
+  try {
+    refreshed = await refreshAccessToken({
+      refreshToken: tokens.refreshToken,
+      clientId: (await import('../shared/constants.js')).CLIENT_ID,
+    });
+  } catch (err) {
+    // Google rejected the token (invalid_grant, revoked, etc.) — needs re-auth.
+    if (err.message?.startsWith('Token refresh failed:')) {
+      throw new AuthError(`Authorization expired for account ${accountId}. Please re-authorize.`);
+    }
+    throw err;
+  }
   // Preserve refresh token if not returned.
   const merged = {
     ...tokens,
