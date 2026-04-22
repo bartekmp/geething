@@ -503,7 +503,6 @@ async function refresh({ silent = false } = {}) {
     }
     await sendMessage({ type: 'geething.refresh' });
     await loadState();
-    await checkPendingSound();
   } catch (err) {
     showError(err.message || String(err));
   } finally {
@@ -582,8 +581,7 @@ function stopLivePoll() {
 // Message from background when new mail arrives while popup is open.
 api.runtime.onMessage.addListener((msg) => {
   if (msg?.type === 'geething.playSound') {
-    playSound();
-    clearPendingSound();
+    clearPendingSound().then(() => playSound());
   }
   if (msg?.type === 'geething.newMail') {
     refresh({ silent: true });
@@ -608,7 +606,13 @@ function getEmailItems() {
 
 document.addEventListener('keydown', (e) => {
   const tag = e.target.tagName;
-  if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' || tag === 'BUTTON' || tag === 'A') {
+  if (
+    tag === 'INPUT' ||
+    tag === 'TEXTAREA' ||
+    tag === 'SELECT' ||
+    tag === 'BUTTON' ||
+    tag === 'A'
+  ) {
     return;
   }
 
@@ -640,7 +644,9 @@ document.addEventListener('keydown', (e) => {
       break;
     }
     case 'Enter': {
-      if (current < 0) break;
+      if (current < 0) {
+        break;
+      }
       items[current].click();
       break;
     }
@@ -648,22 +654,34 @@ document.addEventListener('keydown', (e) => {
       window.close();
       break;
     case 'r': {
-      if (current < 0) break;
+      if (current < 0) {
+        break;
+      }
       const { accountId, messageId } = items[current].dataset;
-      if (accountId && messageId) performAction(accountId, messageId, 'markRead');
+      if (accountId && messageId) {
+        performAction(accountId, messageId, 'markRead');
+      }
       break;
     }
     case 'a': {
-      if (current < 0) break;
+      if (current < 0) {
+        break;
+      }
       const { accountId, messageId } = items[current].dataset;
-      if (accountId && messageId) performAction(accountId, messageId, 'archive');
+      if (accountId && messageId) {
+        performAction(accountId, messageId, 'archive');
+      }
       break;
     }
     case 'o': {
-      if (current < 0) break;
+      if (current < 0) {
+        break;
+      }
       const { accountId, messageId } = items[current].dataset;
       const account = state.accounts.find((acc) => acc.id === accountId);
-      if (account && messageId) openInGmail(account, messageId);
+      if (account && messageId) {
+        openInGmail(account, messageId);
+      }
       break;
     }
   }

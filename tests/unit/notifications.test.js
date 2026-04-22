@@ -84,7 +84,9 @@ describe('notifications / showGroupedMailNotification', () => {
   ];
 
   it('skips when notifications disabled', async () => {
-    const id = await showGroupedMailNotification(messages, account, { notificationsEnabled: false });
+    const id = await showGroupedMailNotification(messages, account, {
+      notificationsEnabled: false,
+    });
     expect(id).toBeNull();
     expect(browser.notifications.create).not.toHaveBeenCalled();
   });

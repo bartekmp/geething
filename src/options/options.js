@@ -27,6 +27,7 @@ const els = {
   soundUpload: document.getElementById('sound-upload'),
   soundClear: document.getElementById('sound-clear'),
   soundStatus: document.getElementById('sound-status'),
+  testNotification: document.getElementById('test-notification'),
   saveIndicator: document.getElementById('save-indicator'),
   version: document.getElementById('version'),
   changelogLink: document.getElementById('changelog-link'),
@@ -380,6 +381,15 @@ els.popupWidth.addEventListener('change', () =>
   saveSettings({ popupWidth: Number(els.popupWidth.value) }),
 );
 
+els.testNotification.addEventListener('click', async () => {
+  els.testNotification.disabled = true;
+  try {
+    await sendMessage({ type: 'geething.testNotification' });
+  } finally {
+    els.testNotification.disabled = false;
+  }
+});
+
 els.addAccount.addEventListener('click', async () => {
   els.addAccount.disabled = true;
   showStatus(null);
@@ -484,3 +494,12 @@ watchSystemTheme(() => {
 });
 
 loadState().catch((err) => showStatus(err.message || String(err)));
+
+api.management
+  .getSelf()
+  .then((info) => {
+    if (info.installType === 'development') {
+      document.getElementById('test-notification-row').hidden = false;
+    }
+  })
+  .catch(() => {});
