@@ -49,7 +49,10 @@ function setAccountState(accountId, patch) {
 async function pollAccount(account, { isInitial = false } = {}) {
   try {
     const token = await getValidAccessToken(account.id);
-    const ids = await fetchUnreadMessageIds(token, { maxResults: 20 });
+    const ids = await fetchUnreadMessageIds(token, {
+      maxResults: 20,
+      labelIds: account.watchedLabels?.length ? account.watchedLabels : ['INBOX'],
+    });
     const seen = await getSeenMessages(account.id);
 
     const messages = [];
@@ -67,12 +70,14 @@ async function pollAccount(account, { isInitial = false } = {}) {
     }
 
     const settings = await getSettings();
-    for (const message of newMessages) {
-      await showNewMailNotification(message, account, settings);
-    }
-    // Sound is independent of OS notification success — play once per poll cycle.
-    if (newMessages.length > 0 && settings.notificationSound) {
-      await playNotificationSound();
+    if (!account.muted) {
+      for (const message of newMessages) {
+        await showNewMailNotification(message, account, settings);
+      }
+      // Sound is independent of OS notification success — play once per poll cycle.
+      if (newMessages.length > 0 && settings.notificationSound) {
+        await playNotificationSound();
+      }
     }
 
     const nextSeen = new Set([...seen, ...ids]);

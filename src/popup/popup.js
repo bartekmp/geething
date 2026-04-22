@@ -178,6 +178,7 @@ function renderTabs() {
 
     const count = document.createElement('span');
     count.className = 'count';
+    count.hidden = !account.unreadCount;
     count.textContent = String(account.unreadCount || 0);
 
     tab.append(dot, label, count);

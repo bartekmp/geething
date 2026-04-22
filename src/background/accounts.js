@@ -94,6 +94,17 @@ export async function updateAccount(accountId, patch) {
   if (patch.color !== undefined) {
     allowed.color = String(patch.color);
   }
+  if (patch.muted !== undefined) {
+    allowed.muted = Boolean(patch.muted);
+  }
+  if (Array.isArray(patch.watchedLabels)) {
+    const valid = patch.watchedLabels.filter(
+      (l) => typeof l === 'string' && l.length > 0 && l.length <= 100,
+    );
+    if (valid.length > 0) {
+      allowed.watchedLabels = valid;
+    }
+  }
   accounts[idx] = { ...accounts[idx], ...allowed };
   await saveAccounts(accounts);
   return accounts[idx];

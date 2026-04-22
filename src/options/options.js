@@ -246,8 +246,76 @@ function renderAccountRow(account) {
     }
   });
 
-  row.append(swatchWrap, labelInput, email, removeBtn);
-  return row;
+  const muteLabel = document.createElement('label');
+  muteLabel.className = 'mute-toggle';
+  muteLabel.title = 'Mute notifications for this account';
+  const muteInput = document.createElement('input');
+  muteInput.type = 'checkbox';
+  muteInput.checked = !!account.muted;
+  muteInput.setAttribute('aria-label', `Mute notifications for ${account.email}`);
+  muteInput.addEventListener('change', async () => {
+    await sendMessage({
+      type: 'geething.updateAccount',
+      accountId: account.id,
+      patch: { muted: muteInput.checked },
+    });
+    account.muted = muteInput.checked;
+    flashSaved();
+  });
+  const muteText = document.createElement('span');
+  muteText.textContent = 'Mute';
+  muteLabel.append(muteInput, muteText);
+
+  row.append(swatchWrap, labelInput, email, muteLabel, removeBtn);
+
+  const labelsRow = document.createElement('div');
+  labelsRow.className = 'account-labels-row';
+  const labelsCaption = document.createElement('span');
+  labelsCaption.className = 'labels-caption';
+  labelsCaption.textContent = 'Watch:';
+  labelsRow.appendChild(labelsCaption);
+
+  const WATCH_LABELS = [
+    { id: 'INBOX', name: 'Inbox' },
+    { id: 'STARRED', name: 'Starred' },
+    { id: 'IMPORTANT', name: 'Important' },
+  ];
+  const currentLabels = account.watchedLabels?.length ? account.watchedLabels : ['INBOX'];
+
+  for (const { id: labelId, name: labelName } of WATCH_LABELS) {
+    const chip = document.createElement('label');
+    chip.className = 'label-chip';
+    const cb = document.createElement('input');
+    cb.type = 'checkbox';
+    cb.checked = currentLabels.includes(labelId);
+    cb.addEventListener('change', async () => {
+      const allCbs = labelsRow.querySelectorAll('input[type=checkbox]');
+      const selected = Array.from(allCbs)
+        .filter((c) => c.checked)
+        .map((c) => c.dataset.labelId);
+      if (!selected.length) {
+        cb.checked = true;
+        return;
+      }
+      await sendMessage({
+        type: 'geething.updateAccount',
+        accountId: account.id,
+        patch: { watchedLabels: selected },
+      });
+      account.watchedLabels = selected;
+      flashSaved();
+    });
+    cb.dataset.labelId = labelId;
+    const chipText = document.createElement('span');
+    chipText.textContent = labelName;
+    chip.append(cb, chipText);
+    labelsRow.appendChild(chip);
+  }
+
+  const wrap = document.createElement('div');
+  wrap.className = 'account-row-wrap';
+  wrap.append(row, labelsRow);
+  return wrap;
 }
 
 function showStatus(msg) {
