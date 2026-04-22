@@ -21,6 +21,7 @@ import {
   playNotificationSound,
   registerNotificationButtonHandler,
   registerNotificationClickHandler,
+  showGroupedMailNotification,
   showNewMailNotification,
 } from './notifications.js';
 import {
@@ -70,12 +71,13 @@ async function pollAccount(account, { isInitial = false } = {}) {
     }
 
     const settings = await getSettings();
-    if (!account.muted) {
-      for (const message of newMessages) {
-        await showNewMailNotification(message, account, settings);
+    if (!account.muted && newMessages.length > 0) {
+      if (newMessages.length === 1) {
+        await showNewMailNotification(newMessages[0], account, settings);
+      } else {
+        await showGroupedMailNotification(newMessages, account, settings);
       }
-      // Sound is independent of OS notification success — play once per poll cycle.
-      if (newMessages.length > 0 && settings.notificationSound) {
+      if (settings.notificationSound) {
         await playNotificationSound();
       }
     }

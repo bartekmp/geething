@@ -116,6 +116,29 @@ export async function playNotificationSound() {
   }
 }
 
+export async function showGroupedMailNotification(messages, account, settings) {
+  if (!settings.notificationsEnabled) {
+    return null;
+  }
+  const notificationId = `${NOTIFICATION_PREFIX}${account.id}|__group__`;
+  const title = `${account.label || account.email}: ${messages.length} new messages`;
+  const body = messages
+    .slice(0, 3)
+    .map((m) => m.subject || '(no subject)')
+    .join('\n');
+  try {
+    await api.notifications.create(notificationId, {
+      type: 'basic',
+      iconUrl: api.runtime.getURL('icons/icon-96.png'),
+      title,
+      message: body,
+    });
+  } catch (err) {
+    console.warn('Grouped notification create failed:', err);
+  }
+  return notificationId;
+}
+
 export function __testing__() {
   return { encodeId, decodeId, buildNotificationContent, notificationRegistry };
 }

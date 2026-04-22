@@ -26,6 +26,19 @@
           </svg>
         </button>
         <button
+          id="compose-btn"
+          class="icon-btn"
+          title="Compose new email"
+          aria-label="Compose new email"
+          hidden
+        >
+          <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true" fill="currentColor">
+            <path
+              d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04a1 1 0 0 0 0-1.41l-2.34-2.34a1 1 0 0 0-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"
+            />
+          </svg>
+        </button>
+        <button
           id="mark-all-btn"
           class="icon-btn"
           title="Mark all as read"
@@ -77,8 +90,15 @@
 
     <main id="content" class="content">
       <div id="empty-state" class="empty-state" hidden>
+        <img src="../icons/icon-48.png" alt="" width="48" height="48" />
         <h2>Welcome to Geething</h2>
-        <p>Click <strong>+</strong> in the toolbar above to connect your first Gmail account.</p>
+        <p>
+          Get desktop notifications for Gmail across multiple accounts — all processed locally,
+          no external servers.
+        </p>
+        <button id="onboarding-add-btn" type="button" class="onboarding-add-btn">
+          Connect Gmail account
+        </button>
       </div>
       <div id="error-banner" class="error-banner" hidden></div>
       <ul id="email-list" class="email-list" role="list"></ul>

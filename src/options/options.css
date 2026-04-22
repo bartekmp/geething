@@ -391,6 +391,42 @@ input[type='checkbox'] {
   margin: 0;
 }
 
+.shortcuts-note {
+  margin: 0 0 12px;
+}
+
+.shortcuts-table {
+  border-collapse: collapse;
+  width: 100%;
+  font-size: 13px;
+}
+
+.shortcuts-table td {
+  padding: 6px 0;
+  vertical-align: middle;
+}
+
+.shortcuts-table td:first-child {
+  width: 140px;
+  white-space: nowrap;
+}
+
+.shortcuts-table tr + tr td {
+  border-top: 1px solid var(--border);
+}
+
+kbd {
+  display: inline-block;
+  padding: 2px 7px;
+  font-size: 11px;
+  font-family: ui-monospace, 'Cascadia Code', 'Fira Mono', monospace;
+  background: var(--bg-hover);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  color: var(--text-primary);
+  line-height: 1.6;
+}
+
 .save-indicator {
   position: fixed;
   bottom: 24px;
