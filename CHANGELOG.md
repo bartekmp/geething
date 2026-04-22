@@ -3,6 +3,13 @@
 All notable changes to Geething are documented here.
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/). Versioning follows [Semantic Versioning](https://semver.org/).
 
+## [0.2.1](https://github.com/bartekmp/geething/compare/geething-v0.2.0...geething-v0.2.1) (2026-04-22)
+
+
+### Bug Fixes
+
+* **ci:** use PAT for release-please so publish workflow fires on release ([#7](https://github.com/bartekmp/geething/issues/7)) ([9735684](https://github.com/bartekmp/geething/commit/97356840bf1d749cd597c8371076586f5cb6e8da))
+
 ## [0.2.0](https://github.com/bartekmp/geething/compare/geething-v0.1.0...geething-v0.2.0) (2026-04-22)
 
 
