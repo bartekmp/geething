@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Geething",
-  "version": "0.2.1",
+  "version": "0.2.2",
   "description": "Multi-account Gmail notifications, badge counter, and quick email actions in a toolbar popup.",
   "author": "Geething contributors",
   "homepage_url": "https://github.com/bartekmp/geething",
@@ -10,12 +10,20 @@
       "id": "geethingapp@gmail.com",
       "strict_min_version": "140.0",
       "data_collection_permissions": {
-        "required": ["none"],
+        "required": [
+          "none"
+        ],
         "optional": []
       }
     }
   },
-  "permissions": ["identity", "storage", "alarms", "notifications", "contextMenus"],
+  "permissions": [
+    "identity",
+    "storage",
+    "alarms",
+    "notifications",
+    "contextMenus"
+  ],
   "host_permissions": [
     "https://www.googleapis.com/*",
     "https://gmail.googleapis.com/*",
@@ -23,7 +31,9 @@
     "https://oauth2.googleapis.com/*"
   ],
   "background": {
-    "scripts": ["background/service-worker.js"],
+    "scripts": [
+      "background/service-worker.js"
+    ],
     "type": "module"
   },
   "action": {
