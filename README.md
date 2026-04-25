@@ -26,7 +26,7 @@ A browser extension for multi-account Gmail notifications. Get a badge counter, 
 
 ### Firefox Add-ons (recommended)
 
-> Firefox Browser Add-Ons listing coming soon. Star this repo to be notified.
+**[Install from Firefox Add-ons (AMO)](https://addons.mozilla.org/en-US/firefox/addon/geething/)**
 
 ### Manual installation (developer mode)
 
@@ -35,7 +35,16 @@ A browser extension for multi-account Gmail notifications. Get a badge counter, 
 3. Click **This Firefox** → **Load Temporary Add-on…**
 4. Select `src/manifest.json` from the unzipped folder.
 
-The extension is now active until you restart Firefox. For permanent installation, wait for the AMO listing or self-sign the extension.
+## Google account warning
+
+When adding a Gmail account you will see a Google warning: **"This app hasn't been verified by Google"**. This is expected and safe to dismiss — it appears because Geething is an independent open-source project and Google's verification programme for apps that access Gmail requires a paid third-party security audit (~$3,000). The extension is not enrolled in that programme.
+
+You can verify for yourself that the extension is safe:
+- The full source code is in this repository — nothing is hidden or obfuscated.
+- No data ever leaves your device. All Gmail access happens directly between your browser and Google's API.
+- OAuth tokens are stored only in Firefox's local extension storage.
+
+To proceed past the warning: click **Advanced** → **Go to Geething (unsafe)**.
 
 ## Building from source
 
@@ -46,8 +55,6 @@ The published AMO release has credentials embedded — you only need this if you
    (Load the extension in `about:debugging` first to find your extension ID.)
 3. Copy `src/shared/credentials.example.js` → `src/shared/credentials.js` and fill in your Client ID and Secret.
 4. Run `npm run dev` to launch Firefox with the extension loaded.
-
-> While your OAuth app is in "Testing" mode you need to add yourself as a test user in the consent screen. For personal use this is fine — no Google verification required.
 
 ## Development
 
@@ -77,7 +84,7 @@ Geething authenticates each account explicitly through Google's OAuth 2.0 flow i
 
 - **Works independently of your browser session** — tokens persist across restarts, cookie clears, and incognito windows. Cookie-based extensions stop working the moment you sign out of Google in your browser.
 - **Official API only** — the session-cookie approach relies on undocumented Google internal endpoints that can change without notice. Geething uses only the published Gmail API.
-- **Minimal, declared scope** — you grant exactly the permissions the extension needs (read-only access to your inbox). Cookie access gives the extension implicit access to your full authenticated Google session.
+- **Minimal, declared scope** — you grant exactly the permissions the extension needs. Cookie access gives the extension implicit access to your full authenticated Google session.
 - **Revocable at any time** — you can revoke Geething's access per-account from [Google Account → Security → Third-party access](https://myaccount.google.com/permissions), independently of your browser or the extension itself.
 
 ## License
