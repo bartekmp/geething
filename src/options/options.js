@@ -1,11 +1,5 @@
-import {
-  ACCOUNT_COLORS,
-  DEFAULT_SETTINGS,
-  SOUND_MAX_BYTES,
-  SOUND_MAX_SECONDS,
-} from '../shared/constants.js';
+import { ACCOUNT_COLORS, DEFAULT_SETTINGS } from '../shared/constants.js';
 import { applyTheme, watchSystemTheme } from '../shared/theme.js';
-import { getSoundDataUrl, saveSoundDataUrl, clearSoundDataUrl } from '../shared/storage.js';
 
 const api = typeof browser !== 'undefined' ? browser : globalThis.chrome;
 
@@ -14,7 +8,6 @@ const els = {
   addAccount: document.getElementById('add-account'),
   accountsStatus: document.getElementById('accounts-status'),
   notificationsEnabled: document.getElementById('notificationsEnabled'),
-  notificationSound: document.getElementById('notificationSound'),
   notificationContentMode: document.getElementById('notificationContentMode'),
   pollIntervalMinutes: document.getElementById('pollIntervalMinutes'),
   pollValue: document.getElementById('pollValue'),
@@ -23,10 +16,6 @@ const els = {
   theme: document.getElementById('theme'),
   popupWidth: document.getElementById('popupWidth'),
   popupWidthValue: document.getElementById('popupWidthValue'),
-  previewSound: document.getElementById('preview-sound'),
-  soundUpload: document.getElementById('sound-upload'),
-  soundClear: document.getElementById('sound-clear'),
-  soundStatus: document.getElementById('sound-status'),
   testNotification: document.getElementById('test-notification'),
   saveIndicator: document.getElementById('save-indicator'),
   version: document.getElementById('version'),
@@ -78,7 +67,6 @@ async function loadState() {
 function populateForm() {
   const s = state.settings;
   els.notificationsEnabled.checked = !!s.notificationsEnabled;
-  els.notificationSound.checked = !!s.notificationSound;
   els.notificationContentMode.value = s.notificationContentMode || 'title-snippet';
   els.pollIntervalMinutes.value = s.pollIntervalMinutes || 2;
   els.pollValue.value = s.pollIntervalMinutes || 2;
@@ -91,9 +79,6 @@ function populateForm() {
   els.version.textContent = `v${manifest.version}`;
   const repoUrl = manifest.homepage_url || 'https://github.com/bartekmp/geething';
   els.changelogLink.href = `${repoUrl}/blob/main/CHANGELOG.md`;
-  getSoundDataUrl().then((url) => {
-    els.soundClear.hidden = !url;
-  });
 }
 
 function renderAccounts() {
@@ -352,9 +337,6 @@ async function saveSettings(patch) {
 els.notificationsEnabled.addEventListener('change', () =>
   saveSettings({ notificationsEnabled: els.notificationsEnabled.checked }),
 );
-els.notificationSound.addEventListener('change', () =>
-  saveSettings({ notificationSound: els.notificationSound.checked }),
-);
 els.notificationContentMode.addEventListener('change', () =>
   saveSettings({ notificationContentMode: els.notificationContentMode.value }),
 );
@@ -402,90 +384,6 @@ els.addAccount.addEventListener('click', async () => {
     els.addAccount.disabled = false;
   }
 });
-
-els.previewSound.addEventListener('click', async () => {
-  try {
-    const customUrl = await getSoundDataUrl();
-    if (customUrl) {
-      const audio = new Audio(customUrl);
-      audio.play().catch(() => {});
-      return;
-    }
-    const AudioCtx = window.AudioContext || window.webkitAudioContext;
-    if (!AudioCtx) {
-      return;
-    }
-    const ctx = new AudioCtx();
-    const osc = ctx.createOscillator();
-    const gain = ctx.createGain();
-    osc.type = 'sine';
-    osc.frequency.value = 880;
-    gain.gain.setValueAtTime(0.001, ctx.currentTime);
-    gain.gain.exponentialRampToValueAtTime(0.15, ctx.currentTime + 0.02);
-    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.35);
-    osc.connect(gain).connect(ctx.destination);
-    osc.start();
-    osc.stop(ctx.currentTime + 0.4);
-    setTimeout(() => ctx.close(), 500);
-  } catch {
-    // ignore
-  }
-});
-
-els.soundUpload.addEventListener('change', async () => {
-  const file = els.soundUpload.files[0];
-  if (!file) {
-    return;
-  }
-  els.soundUpload.value = '';
-  if (file.size > SOUND_MAX_BYTES) {
-    showSoundStatus(`File too large (max ${SOUND_MAX_BYTES / 1000} KB).`);
-    return;
-  }
-  const dataUrl = await readFileAsDataUrl(file);
-  const duration = await getAudioDuration(dataUrl);
-  if (duration > SOUND_MAX_SECONDS) {
-    showSoundStatus(`Audio too long (max ${SOUND_MAX_SECONDS} s, got ${Math.ceil(duration)} s).`);
-    return;
-  }
-  await saveSoundDataUrl(dataUrl);
-  els.soundClear.hidden = false;
-  showSoundStatus(null);
-  flashSaved();
-});
-
-els.soundClear.addEventListener('click', async () => {
-  await clearSoundDataUrl();
-  els.soundClear.hidden = true;
-  flashSaved();
-});
-
-function showSoundStatus(msg) {
-  if (!msg) {
-    els.soundStatus.hidden = true;
-    els.soundStatus.textContent = '';
-    return;
-  }
-  els.soundStatus.hidden = false;
-  els.soundStatus.textContent = msg;
-}
-
-function readFileAsDataUrl(file) {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = () => resolve(reader.result);
-    reader.onerror = () => reject(reader.error);
-    reader.readAsDataURL(file);
-  });
-}
-
-function getAudioDuration(dataUrl) {
-  return new Promise((resolve) => {
-    const audio = new Audio(dataUrl);
-    audio.addEventListener('loadedmetadata', () => resolve(audio.duration));
-    audio.addEventListener('error', () => resolve(0));
-  });
-}
 
 watchSystemTheme(() => {
   if (state.settings?.theme === 'auto') {

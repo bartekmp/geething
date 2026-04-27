@@ -64,7 +64,6 @@ describe('notifications / showNewMailNotification', () => {
   it('creates a notification when enabled', async () => {
     await showNewMailNotification(message, account, {
       notificationsEnabled: true,
-      notificationSound: false,
       notificationContentMode: 'title',
     });
     expect(browser.notifications.create).toHaveBeenCalled();
