@@ -1,4 +1,3 @@
-import { clearPendingSound, getPendingSound, getSoundDataUrl } from '../shared/storage.js';
 import { applyTheme, watchSystemTheme } from '../shared/theme.js';
 
 const api = typeof browser !== 'undefined' ? browser : globalThis.chrome;
@@ -301,7 +300,7 @@ function renderEmailItem(account, message) {
     makeIconBtn('trash', 'Delete', () => performAction(account.id, message.id, 'trash'), {
       danger: true,
     }),
-    makeIconBtn('open', 'Open in Gmail', () => openInGmail(account, message.id)),
+    makeIconBtn('open', 'Open in Gmail™', () => openInGmail(account, message.id)),
   );
 
   li.append(row, subject, snippet, actions);
@@ -414,7 +413,7 @@ function renderDetail(account, detail) {
         }),
       { danger: true },
     ),
-    makeIconBtn('open', 'Open in Gmail', () => openInGmail(account, detail.id)),
+    makeIconBtn('open', 'Open in Gmail™', () => openInGmail(account, detail.id)),
   );
 
   const subject = document.createElement('h2');
@@ -510,58 +509,6 @@ async function refresh({ silent = false } = {}) {
   }
 }
 
-// ── Sound ──────────────────────────────────────────────────────────────────
-async function playSound() {
-  const dataUrl = await getSoundDataUrl();
-  if (dataUrl) {
-    try {
-      const audio = new Audio(dataUrl);
-      await audio.play();
-      return;
-    } catch {
-      // Fall through to beep.
-    }
-  }
-  playBeep();
-}
-
-async function playBeep() {
-  try {
-    const AudioCtx = window.AudioContext || window.webkitAudioContext;
-    if (!AudioCtx) {
-      return;
-    }
-    const ctx = new AudioCtx();
-    if (ctx.state === 'suspended') {
-      await ctx.resume();
-    }
-    const osc = ctx.createOscillator();
-    const gain = ctx.createGain();
-    osc.type = 'sine';
-    osc.frequency.value = 880;
-    gain.gain.setValueAtTime(0.001, ctx.currentTime);
-    gain.gain.exponentialRampToValueAtTime(0.15, ctx.currentTime + 0.02);
-    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.35);
-    osc.connect(gain).connect(ctx.destination);
-    osc.start();
-    osc.stop(ctx.currentTime + 0.4);
-    setTimeout(() => ctx.close(), 500);
-  } catch {
-    // ignore
-  }
-}
-
-async function checkPendingSound() {
-  const ts = await getPendingSound();
-  if (!ts) {
-    return;
-  }
-  if (Date.now() - ts < 300_000) {
-    await playSound();
-  }
-  await clearPendingSound();
-}
-
 // ── Live refresh while popup is open ──────────────────────────────────────
 const LIVE_POLL_MS = 30_000;
 let livePollHandle = null;
@@ -580,9 +527,6 @@ function stopLivePoll() {
 
 // Message from background when new mail arrives while popup is open.
 api.runtime.onMessage.addListener((msg) => {
-  if (msg?.type === 'geething.playSound') {
-    clearPendingSound().then(() => playSound());
-  }
   if (msg?.type === 'geething.newMail') {
     refresh({ silent: true });
   }
@@ -690,6 +634,5 @@ document.addEventListener('keydown', (e) => {
 // ── Boot ───────────────────────────────────────────────────────────────────
 (async () => {
   await loadState();
-  await checkPendingSound();
   startLivePoll();
 })().catch((err) => showError(err.message || String(err)));

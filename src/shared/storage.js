@@ -67,35 +67,6 @@ export async function saveSeenMessages(accountId, seenSet) {
   await localArea().set({ [STORAGE_KEYS.SEEN_MESSAGES]: bucket });
 }
 
-// Custom notification sound stored as a base64 data URL.
-export async function getSoundDataUrl() {
-  const result = await localArea().get('customSound');
-  return result.customSound || null;
-}
-
-export async function saveSoundDataUrl(dataUrl) {
-  await localArea().set({ customSound: dataUrl });
-}
-
-export async function clearSoundDataUrl() {
-  await localArea().remove('customSound');
-}
-
-// Pending-sound flag: set by the background when new mail arrives,
-// cleared by the popup after it plays the sound.
-export async function setPendingSound() {
-  await localArea().set({ pendingSound: Date.now() });
-}
-
-export async function getPendingSound() {
-  const result = await localArea().get('pendingSound');
-  return result.pendingSound || null;
-}
-
-export async function clearPendingSound() {
-  await localArea().remove('pendingSound');
-}
-
 export async function getPersistedAccountState() {
   const result = await localArea().get(STORAGE_KEYS.ACCOUNT_STATE);
   return result[STORAGE_KEYS.ACCOUNT_STATE] || {};

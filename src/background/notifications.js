@@ -1,5 +1,3 @@
-import { setPendingSound } from '../shared/storage.js';
-
 const api = typeof browser !== 'undefined' ? browser : globalThis.chrome;
 
 const NOTIFICATION_PREFIX = 'geething:';
@@ -101,15 +99,6 @@ export function registerNotificationClickHandler(handler) {
       notificationRegistry.delete(notificationId);
     }
   });
-}
-
-// MV3 service workers have no audio API. Strategy:
-// 1. If the popup is already open, send it a message to play immediately.
-// 2. Set a pending-sound flag so the popup plays the sound the next time it
-//    is opened (boot sequence reads this flag via checkPendingSound).
-export async function playNotificationSound() {
-  await setPendingSound();
-  api.runtime.sendMessage({ type: 'geething.playSound' }).catch(() => {});
 }
 
 export async function showGroupedMailNotification(messages, account, settings) {

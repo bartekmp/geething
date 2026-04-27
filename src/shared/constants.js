@@ -27,16 +27,12 @@ export const ALARM_NAMES = Object.freeze({
 export const DEFAULT_SETTINGS = Object.freeze({
   pollIntervalMinutes: 2,
   notificationsEnabled: true,
-  notificationSound: true,
   notificationContentMode: 'title-snippet', // 'title' | 'title-snippet'
   theme: 'auto', // 'auto' | 'light' | 'dark'
   maxMessagesPerAccount: 20,
   autoMarkReadOnOpen: true,
   popupWidth: 560,
 });
-
-export const SOUND_MAX_BYTES = 500_000;
-export const SOUND_MAX_SECONDS = 5;
 
 export const ACCOUNT_COLORS = Object.freeze([
   '#4f8cff',

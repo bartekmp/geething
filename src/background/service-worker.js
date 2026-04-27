@@ -18,7 +18,6 @@ import {
 } from './accounts.js';
 import { clearBadge, updateBadge } from './badge.js';
 import {
-  playNotificationSound,
   registerNotificationButtonHandler,
   registerNotificationClickHandler,
   showGroupedMailNotification,
@@ -76,9 +75,6 @@ async function pollAccount(account, { isInitial = false } = {}) {
         await showNewMailNotification(newMessages[0], account, settings);
       } else {
         await showGroupedMailNotification(newMessages, account, settings);
-      }
-      if (settings.notificationSound) {
-        await playNotificationSound();
       }
     }
 
@@ -237,9 +233,6 @@ async function handleMessage(msg, _sender) {
         { id: 'test', email: 'test@geething', label: 'Test' },
         { ...settings, notificationsEnabled: true },
       );
-      if (settings.notificationSound) {
-        await playNotificationSound();
-      }
       return { ok: true };
     }
     default:
