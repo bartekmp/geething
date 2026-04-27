@@ -3,6 +3,13 @@
 All notable changes to Geething are documented here.
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/). Versioning follows [Semantic Versioning](https://semver.org/).
 
+## [0.3.0](https://github.com/bartekmp/geething/compare/geething-v0.2.2...geething-v0.3.0) (2026-04-27)
+
+
+### Features
+
+* remove faulty sound notifications, add trademarks, hide test button ([#10](https://github.com/bartekmp/geething/issues/10)) ([43c8ffd](https://github.com/bartekmp/geething/commit/43c8ffd24cc904e5ba723a805e5dc7030378b882))
+
 ## [0.2.2](https://github.com/bartekmp/geething/compare/geething-v0.2.1...geething-v0.2.2) (2026-04-25)
 
 
