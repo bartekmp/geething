@@ -25,7 +25,7 @@ const DEV_SW = `// DEV ONLY — lives only in .dev-src/, never part of the produ
 import { getSettings, saveAccounts, savePersistedAccountState } from '../shared/storage.js';
 import { ACCOUNTS, buildMessages } from './dev-seed.js';
 import { updateBadge } from './badge.js';
-import { showNewMailNotification, playNotificationSound } from './notifications.js';
+import { showNewMailNotification } from './notifications.js';
 
 const api = typeof browser !== 'undefined' ? browser : globalThis.chrome;
 const accountState = new Map();
@@ -73,9 +73,6 @@ async function handleMessage(msg) {
       const message = messages[refreshCount % messages.length];
       if (!account.muted) {
         await showNewMailNotification(message, account, settings);
-        if (settings.notificationSound) {
-          await playNotificationSound();
-        }
       }
       return { total: Array.from(accountState.values()).reduce((s, a) => s + a.unreadCount, 0) };
     }

@@ -17,9 +17,9 @@ A browser extension for multi-account Gmail™ notifications. Get a badge counte
 - **Themes** — light, dark, or auto (follows system preference)
 - **Configurable** — poll interval (1–30 min), max messages shown, popup width, and more
 
-| Popup | Settings |
-|-------|---------|
-| ![Popup window](docs/geething-main.png) | ![Settings page](docs/geething-settings.png) |
+| Popup | Settings | Quick actions |
+|-------|---------|-----------------|
+| ![Popup window](docs/geething-main.png) | ![Settings page](docs/geething-settings.png) | ![Quick actions](docs/geething-quick-actions.png) |
 
 ## Installation
 
