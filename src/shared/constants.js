@@ -32,6 +32,7 @@ export const DEFAULT_SETTINGS = Object.freeze({
   maxMessagesPerAccount: 20,
   autoMarkReadOnOpen: true,
   popupWidth: 560,
+  popupHeight: 600,
 });
 
 export const ACCOUNT_COLORS = Object.freeze([

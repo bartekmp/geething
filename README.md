@@ -19,7 +19,7 @@ A browser extension for multi-account Gmail™ notifications. Get a badge counte
 - **Popup** — tabbed per-account view with sender, subject, and snippet; click any email to read it inline
 - **Quick actions** — mark as read, archive, move to spam, delete, reply, or open in Gmail™, all without leaving the extension
 - **Themes** — light, dark, or auto (follows system preference)
-- **Configurable** — poll interval (1–30 min), max messages shown, popup width, and more
+- **Configurable** — poll interval (1–30 min), max messages shown, popup size, and more
 
 | Popup | Settings | Quick actions |
 |-------|---------|-----------------|
