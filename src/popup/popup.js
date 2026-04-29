@@ -31,12 +31,17 @@ const els = {
   addBtn: document.getElementById('add-account-btn'),
   onboardingAddBtn: document.getElementById('onboarding-add-btn'),
   optionsBtn: document.getElementById('options-btn'),
+  pagination: document.getElementById('pagination'),
+  paginationPrev: document.getElementById('pagination-prev'),
+  paginationNext: document.getElementById('pagination-next'),
+  paginationInfo: document.getElementById('pagination-info'),
 };
 
 const state = {
   accounts: [],
   settings: null,
   activeAccountId: null,
+  pageByAccount: {},
 };
 
 // ── Utilities ──────────────────────────────────────────────────────────────
@@ -194,6 +199,7 @@ function renderTabs() {
     tab.append(dot, label, count);
     tab.addEventListener('click', () => {
       state.activeAccountId = account.id;
+      state.pageByAccount[account.id] = 0;
       renderTabs();
       renderList();
       updateGmailBtn();
@@ -229,15 +235,28 @@ function showReauthBanner(account) {
   els.error.append(msg, btn);
 }
 
+function renderPagination(total, page, totalPages) {
+  if (totalPages <= 1) {
+    els.pagination.hidden = true;
+    return;
+  }
+  els.pagination.hidden = false;
+  els.paginationPrev.disabled = page === 0;
+  els.paginationNext.disabled = page >= totalPages - 1;
+  els.paginationInfo.textContent = `${page + 1} / ${totalPages}`;
+}
+
 function renderList() {
   clearNode(els.list);
   const account = getActiveAccount();
   if (!state.accounts.length) {
     els.empty.hidden = false;
+    els.pagination.hidden = true;
     return;
   }
   els.empty.hidden = true;
   if (!account) {
+    els.pagination.hidden = true;
     return;
   }
   if (account.needsReauth) {
@@ -249,6 +268,11 @@ function renderList() {
     showError(null);
   }
   const messages = account.messages || [];
+  const perPage = state.settings?.maxMessagesPerAccount || 20;
+  const totalPages = Math.max(1, Math.ceil(messages.length / perPage));
+  const page = Math.min(state.pageByAccount[account.id] || 0, totalPages - 1);
+  state.pageByAccount[account.id] = page;
+
   if (!messages.length) {
     const empty = document.createElement('li');
     empty.className = 'empty-state';
@@ -256,11 +280,14 @@ function renderList() {
     p.textContent = 'No unread messages.';
     empty.appendChild(p);
     els.list.appendChild(empty);
+    els.pagination.hidden = true;
     return;
   }
-  for (const msg of messages) {
+  const pageMessages = messages.slice(page * perPage, (page + 1) * perPage);
+  for (const msg of pageMessages) {
     els.list.appendChild(renderEmailItem(account, msg));
   }
+  renderPagination(messages.length, page, totalPages);
 }
 
 function renderEmailItem(account, message) {
@@ -452,6 +479,33 @@ function renderDetail(account, detail) {
 
 els.backBtn.addEventListener('click', () => {
   els.detail.hidden = true;
+});
+
+// ── Pagination handlers ────────────────────────────────────────────────────
+els.paginationPrev.addEventListener('click', () => {
+  const account = getActiveAccount();
+  if (!account) {
+    return;
+  }
+  state.pageByAccount[account.id] = Math.max(0, (state.pageByAccount[account.id] || 0) - 1);
+  renderList();
+  els.list.scrollTop = 0;
+});
+
+els.paginationNext.addEventListener('click', () => {
+  const account = getActiveAccount();
+  if (!account) {
+    return;
+  }
+  const messages = account.messages || [];
+  const perPage = state.settings?.maxMessagesPerAccount || 20;
+  const totalPages = Math.ceil(messages.length / perPage);
+  state.pageByAccount[account.id] = Math.min(
+    totalPages - 1,
+    (state.pageByAccount[account.id] || 0) + 1,
+  );
+  renderList();
+  els.list.scrollTop = 0;
 });
 
 // ── Topbar handlers ────────────────────────────────────────────────────────

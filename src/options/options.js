@@ -12,6 +12,7 @@ const els = {
   pollIntervalMinutes: document.getElementById('pollIntervalMinutes'),
   pollValue: document.getElementById('pollValue'),
   maxMessagesPerAccount: document.getElementById('maxMessagesPerAccount'),
+  maxMessagesPerAccountValue: document.getElementById('maxMessagesPerAccountValue'),
   autoMarkReadOnOpen: document.getElementById('autoMarkReadOnOpen'),
   theme: document.getElementById('theme'),
   popupWidth: document.getElementById('popupWidth'),
@@ -72,6 +73,7 @@ function populateForm() {
   els.pollIntervalMinutes.value = s.pollIntervalMinutes || 2;
   els.pollValue.value = s.pollIntervalMinutes || 2;
   els.maxMessagesPerAccount.value = s.maxMessagesPerAccount || 20;
+  els.maxMessagesPerAccountValue.value = s.maxMessagesPerAccount || 20;
   els.autoMarkReadOnOpen.checked = !!s.autoMarkReadOnOpen;
   els.theme.value = s.theme || 'auto';
   els.popupWidth.value = s.popupWidth || DEFAULT_SETTINGS.popupWidth;
@@ -349,6 +351,9 @@ els.pollIntervalMinutes.addEventListener('input', () => {
 els.pollIntervalMinutes.addEventListener('change', () =>
   saveSettings({ pollIntervalMinutes: Number(els.pollIntervalMinutes.value) }),
 );
+els.maxMessagesPerAccount.addEventListener('input', () => {
+  els.maxMessagesPerAccountValue.value = els.maxMessagesPerAccount.value;
+});
 els.maxMessagesPerAccount.addEventListener('change', () =>
   saveSettings({ maxMessagesPerAccount: Number(els.maxMessagesPerAccount.value) }),
 );
