@@ -3,6 +3,19 @@
 All notable changes to Geething are documented here.
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/). Versioning follows [Semantic Versioning](https://semver.org/).
 
+## [0.5.0](https://github.com/bartekmp/geething/compare/geething-v0.4.0...geething-v0.5.0) (2026-04-29)
+
+
+### Features
+
+* Formatting, notifications, popup improvements ([#19](https://github.com/bartekmp/geething/issues/19)) ([ecb2c22](https://github.com/bartekmp/geething/commit/ecb2c22924d8819683a598d747dccdedfc1bb1ef))
+* preview pagination and message size limits ([#21](https://github.com/bartekmp/geething/issues/21)) ([01afcf4](https://github.com/bartekmp/geething/commit/01afcf48537a4cd7476865ad492f7569c55a0501))
+
+
+### Bug Fixes
+
+* Make keyboard shortcuts optional ([#22](https://github.com/bartekmp/geething/issues/22)) ([7ba6d2b](https://github.com/bartekmp/geething/commit/7ba6d2becf26128174f3731ba2f9652c9033e477))
+
 ## [0.4.0](https://github.com/bartekmp/geething/compare/geething-v0.3.0...geething-v0.4.0) (2026-04-29)
 
 
