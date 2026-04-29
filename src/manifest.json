@@ -15,12 +15,13 @@
       }
     }
   },
-  "permissions": ["identity", "storage", "alarms", "notifications", "contextMenus"],
+  "permissions": ["tabs", "storage", "alarms", "notifications", "contextMenus"],
   "host_permissions": [
     "https://www.googleapis.com/*",
     "https://gmail.googleapis.com/*",
     "https://accounts.google.com/*",
-    "https://oauth2.googleapis.com/*"
+    "https://oauth2.googleapis.com/*",
+    "https://geething.eu/*"
   ],
   "background": {
     "scripts": ["background/service-worker.js"],
