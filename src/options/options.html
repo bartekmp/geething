@@ -38,14 +38,14 @@
       </section>
 
       <section class="card">
-        <h2>Polling</h2>
+        <h2>Messages</h2>
         <label class="row">
           <span>Check interval: <output id="pollValue">2</output> min</span>
           <input id="pollIntervalMinutes" type="range" min="1" max="30" step="1" />
         </label>
         <label class="row">
-          <span>Max messages shown per account</span>
-          <input id="maxMessagesPerAccount" type="number" min="5" max="50" step="5" />
+          <span>Max messages per page: <output id="maxMessagesPerAccountValue">20</output></span>
+          <input id="maxMessagesPerAccount" type="range" min="5" max="50" step="5" />
         </label>
         <label class="row">
           <span>Auto mark-as-read when opening preview</span>

@@ -47,3 +47,7 @@ export const ACCOUNT_COLORS = Object.freeze([
 ]);
 
 export const MAX_BADGE_DISPLAY = 99;
+
+// Hard limits — not user-configurable.
+export const MAX_FETCH_MESSAGES = 100;
+export const MAX_EMAIL_SIZE_BYTES = 5 * 1024 * 1024; // 5 MB

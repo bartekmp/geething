@@ -1,4 +1,4 @@
-import { GMAIL_API_BASE } from '../shared/constants.js';
+import { GMAIL_API_BASE, MAX_EMAIL_SIZE_BYTES } from '../shared/constants.js';
 
 class HttpError extends Error {
   constructor(status, message, body) {
@@ -72,6 +72,10 @@ export async function fetchMessageDetail(accessToken, messageId) {
   const data = await gmailFetch(accessToken, `/users/me/messages/${messageId}`, {
     query: { format: 'full' },
   });
+  if (data.sizeEstimate > MAX_EMAIL_SIZE_BYTES) {
+    const mb = (data.sizeEstimate / 1024 / 1024).toFixed(1);
+    throw new Error(`Email is too large to display (${mb} MB).`);
+  }
   return parseMessage(data, { includeBody: true });
 }
 

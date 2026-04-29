@@ -1,4 +1,4 @@
-import { ALARM_NAMES } from '../shared/constants.js';
+import { ALARM_NAMES, MAX_FETCH_MESSAGES } from '../shared/constants.js';
 import { DEV_MESSAGE_DETAILS } from './dev-seed.js';
 import {
   getPersistedAccountState,
@@ -54,7 +54,7 @@ async function pollAccount(account, { isInitial = false } = {}) {
   try {
     const token = await getValidAccessToken(account.id);
     const ids = await fetchUnreadMessageIds(token, {
-      maxResults: 20,
+      maxResults: MAX_FETCH_MESSAGES,
       labelIds: account.watchedLabels?.length ? account.watchedLabels : ['INBOX'],
     });
     const seen = await getSeenMessages(account.id);
