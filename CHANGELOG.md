@@ -3,6 +3,13 @@
 All notable changes to Geething are documented here.
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/). Versioning follows [Semantic Versioning](https://semver.org/).
 
+## [0.4.0](https://github.com/bartekmp/geething/compare/geething-v0.3.0...geething-v0.4.0) (2026-04-29)
+
+
+### Features
+
+* set geething.eu as the OAuth redirect ([#16](https://github.com/bartekmp/geething/issues/16)) ([c3c90cc](https://github.com/bartekmp/geething/commit/c3c90cc5edfbe2c03b0fbae74df5e9ef149f449d))
+
 ## [0.3.0](https://github.com/bartekmp/geething/compare/geething-v0.2.2...geething-v0.3.0) (2026-04-27)
 
 
