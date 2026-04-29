@@ -14,6 +14,8 @@ const els = {
   maxMessagesPerAccount: document.getElementById('maxMessagesPerAccount'),
   maxMessagesPerAccountValue: document.getElementById('maxMessagesPerAccountValue'),
   autoMarkReadOnOpen: document.getElementById('autoMarkReadOnOpen'),
+  keyboardShortcutsEnabled: document.getElementById('keyboardShortcutsEnabled'),
+  shortcutsDetail: document.getElementById('shortcuts-detail'),
   theme: document.getElementById('theme'),
   popupWidth: document.getElementById('popupWidth'),
   popupWidthValue: document.getElementById('popupWidthValue'),
@@ -75,6 +77,8 @@ function populateForm() {
   els.maxMessagesPerAccount.value = s.maxMessagesPerAccount || 20;
   els.maxMessagesPerAccountValue.value = s.maxMessagesPerAccount || 20;
   els.autoMarkReadOnOpen.checked = !!s.autoMarkReadOnOpen;
+  els.keyboardShortcutsEnabled.checked = s.keyboardShortcutsEnabled !== false;
+  els.shortcutsDetail.hidden = !els.keyboardShortcutsEnabled.checked;
   els.theme.value = s.theme || 'auto';
   els.popupWidth.value = s.popupWidth || DEFAULT_SETTINGS.popupWidth;
   els.popupWidthValue.value = els.popupWidth.value;
@@ -360,6 +364,10 @@ els.maxMessagesPerAccount.addEventListener('change', () =>
 els.autoMarkReadOnOpen.addEventListener('change', () =>
   saveSettings({ autoMarkReadOnOpen: els.autoMarkReadOnOpen.checked }),
 );
+els.keyboardShortcutsEnabled.addEventListener('change', () => {
+  els.shortcutsDetail.hidden = !els.keyboardShortcutsEnabled.checked;
+  saveSettings({ keyboardShortcutsEnabled: els.keyboardShortcutsEnabled.checked });
+});
 els.theme.addEventListener('change', async () => {
   await saveSettings({ theme: els.theme.value });
   applyTheme(els.theme.value);

@@ -615,6 +615,9 @@ function getEmailItems() {
 }
 
 document.addEventListener('keydown', (e) => {
+  if (!state.settings?.keyboardShortcutsEnabled) {
+    return;
+  }
   const tag = e.target.tagName;
   if (
     tag === 'INPUT' ||

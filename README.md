@@ -19,11 +19,12 @@ A browser extension for multi-account Gmail™ notifications. Get a badge counte
 - **Popup** — tabbed per-account view with sender, subject, and snippet; click any email to read it inline
 - **Quick actions** — mark as read, archive, move to spam, delete, reply, or open in Gmail™, all without leaving the extension
 - **Themes** — light, dark, or auto (follows system preference)
-- **Configurable** — poll interval (1–30 min), max messages shown, popup size, and more
+- **Configurable** — poll interval (1–30 min), max messages per page (5–50), popup size, keyboard shortcuts, and more
+- **Limits** — up to 100 unread messages are fetched per inbox per poll; emails larger than 5 MB cannot be previewed inline (open in Gmail™ instead)
 
-| Popup | Settings | Quick actions |
-|-------|---------|-----------------|
-| ![Popup window](docs/geething-main.png) | ![Settings page](docs/geething-settings.png) | ![Quick actions](docs/geething-quick-actions.png) |
+| Popup | Message Preview | Settings | Quick actions |
+|-------|---------|---------|-----------------|
+| ![Popup window](docs/geething-main.png) | ![Message preview](docs/geething-message-preview.png) | ![Settings page](docs/geething-settings.png) | ![Quick actions](docs/geething-quick-actions.png) |
 
 ## Installation
 
