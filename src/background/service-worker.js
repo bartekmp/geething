@@ -1,4 +1,5 @@
 import { ALARM_NAMES } from '../shared/constants.js';
+import { DEV_MESSAGE_DETAILS } from './dev-seed.js';
 import {
   getPersistedAccountState,
   getSeenMessages,
@@ -39,6 +40,9 @@ const api = typeof browser !== 'undefined' ? browser : globalThis.chrome;
 // In-memory cache of last-known unread counts/messages per account.
 const accountState = new Map();
 
+// Guard against concurrent polls that would cause duplicate notifications.
+let pollRunning = false;
+
 function setAccountState(accountId, patch) {
   const prev = accountState.get(accountId) || {};
   const next = { ...prev, ...patch };
@@ -69,6 +73,11 @@ async function pollAccount(account, { isInitial = false } = {}) {
       }
     }
 
+    // Persist seen BEFORE showing notifications so a service-worker death
+    // between the two steps cannot cause the same messages to re-notify.
+    const nextSeen = new Set([...seen, ...ids]);
+    await saveSeenMessages(account.id, nextSeen);
+
     const settings = await getSettings();
     if (!account.muted && newMessages.length > 0) {
       if (newMessages.length === 1) {
@@ -77,9 +86,6 @@ async function pollAccount(account, { isInitial = false } = {}) {
         await showGroupedMailNotification(newMessages, account, settings);
       }
     }
-
-    const nextSeen = new Set([...seen, ...ids]);
-    await saveSeenMessages(account.id, nextSeen);
 
     setAccountState(account.id, {
       unreadCount: ids.length,
@@ -100,27 +106,35 @@ async function pollAccount(account, { isInitial = false } = {}) {
 }
 
 async function pollAllAccounts({ isInitial = false } = {}) {
-  const accounts = await getAccounts();
-  let total = 0;
-  for (const account of accounts) {
-    const result = await pollAccount(account, { isInitial });
-    total += result.count || 0;
+  if (pollRunning) {
+    return 0;
   }
-  // Remove stale entries for deleted accounts.
-  const ids = new Set(accounts.map((a) => a.id));
-  for (const id of accountState.keys()) {
-    if (!ids.has(id)) {
-      accountState.delete(id);
+  pollRunning = true;
+  try {
+    const accounts = await getAccounts();
+    let total = 0;
+    for (const account of accounts) {
+      const result = await pollAccount(account, { isInitial });
+      total += result.count || 0;
     }
+    // Remove stale entries for deleted accounts.
+    const ids = new Set(accounts.map((a) => a.id));
+    for (const id of accountState.keys()) {
+      if (!ids.has(id)) {
+        accountState.delete(id);
+      }
+    }
+    if (total > 0) {
+      await updateBadge(total);
+    } else {
+      await clearBadge();
+    }
+    // Persist so the popup sees correct state immediately after SW restart.
+    await savePersistedAccountState(Object.fromEntries(accountState));
+    return total;
+  } finally {
+    pollRunning = false;
   }
-  if (total > 0) {
-    await updateBadge(total);
-  } else {
-    await clearBadge();
-  }
-  // Persist so the popup sees correct state immediately after SW restart.
-  await savePersistedAccountState(Object.fromEntries(accountState));
-  return total;
 }
 
 async function rescheduleAlarm() {
@@ -189,6 +203,9 @@ async function handleMessage(msg, _sender) {
       return { accounts: accs };
     }
     case 'geething.getMessageDetail': {
+      if (DEV_MESSAGE_DETAILS.has(msg.messageId)) {
+        return DEV_MESSAGE_DETAILS.get(msg.messageId);
+      }
       const account = await getAccountById(msg.accountId);
       if (!account) {
         throw new Error('Account not found');

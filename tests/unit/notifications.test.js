@@ -108,6 +108,35 @@ describe('notifications / showGroupedMailNotification', () => {
   });
 });
 
+describe('notifications / showGroupedMailNotification clears individual notifications', () => {
+  const account = { id: 'acc1', email: 'me@x.com', label: 'Me' };
+  const messages = [
+    { id: 'm1', subject: 'First' },
+    { id: 'm2', subject: 'Second' },
+  ];
+
+  it('clears per-message notifications for the same account before creating grouped', async () => {
+    const { notificationRegistry } = __testing__();
+    // Simulate two individual notifications already created for this account.
+    notificationRegistry.set('geething:acc1|msg-a', { accountId: 'acc1', messageId: 'msg-a' });
+    notificationRegistry.set('geething:acc1|msg-b', { accountId: 'acc1', messageId: 'msg-b' });
+    // A notification for a different account should not be touched.
+    notificationRegistry.set('geething:acc2|msg-c', { accountId: 'acc2', messageId: 'msg-c' });
+
+    await showGroupedMailNotification(messages, account, { notificationsEnabled: true });
+
+    expect(browser.notifications.clear).toHaveBeenCalledWith('geething:acc1|msg-a');
+    expect(browser.notifications.clear).toHaveBeenCalledWith('geething:acc1|msg-b');
+    expect(browser.notifications.clear).not.toHaveBeenCalledWith('geething:acc2|msg-c');
+    expect(notificationRegistry.has('geething:acc1|msg-a')).toBe(false);
+    expect(notificationRegistry.has('geething:acc1|msg-b')).toBe(false);
+    expect(notificationRegistry.has('geething:acc2|msg-c')).toBe(true);
+
+    // The grouped notification itself should still be created.
+    expect(browser.notifications.create).toHaveBeenCalledOnce();
+  });
+});
+
 describe('notifications / click handler', () => {
   it('subscribes to onClicked', () => {
     registerNotificationClickHandler(() => {});

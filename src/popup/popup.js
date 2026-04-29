@@ -1,4 +1,5 @@
 import { applyTheme, watchSystemTheme } from '../shared/theme.js';
+import { buildPlainTextDoc, formatPlainTextEmail, processEmailHtml } from './email-format.js';
 
 const api = typeof browser !== 'undefined' ? browser : globalThis.chrome;
 
@@ -378,6 +379,17 @@ async function openDetail(account, message) {
   }
 }
 
+// ── Detail rendering ───────────────────────────────────────────────────────
+
+function makeEmailIframe(srcdoc) {
+  const iframe = document.createElement('iframe');
+  iframe.setAttribute('sandbox', 'allow-popups');
+  iframe.srcdoc = srcdoc;
+  return iframe;
+}
+
+// ── Detail rendering ───────────────────────────────────────────────────────
+
 function renderDetail(account, detail) {
   clearNode(els.detailContent);
   clearNode(els.detailActions);
@@ -429,12 +441,10 @@ function renderDetail(account, detail) {
   const body = document.createElement('div');
   body.className = 'detail-body';
   if (detail.bodyHtml) {
-    const iframe = document.createElement('iframe');
-    iframe.setAttribute('sandbox', '');
-    iframe.srcdoc = detail.bodyHtml;
-    body.appendChild(iframe);
+    body.appendChild(makeEmailIframe(processEmailHtml(detail.bodyHtml)));
   } else {
-    body.textContent = detail.bodyText || detail.snippet || '';
+    const rawText = detail.bodyText || detail.snippet || '';
+    body.appendChild(makeEmailIframe(buildPlainTextDoc(formatPlainTextEmail(rawText))));
   }
 
   els.detailContent.append(subject, from, body);
@@ -487,6 +497,8 @@ async function loadState() {
   }
   const width = state.settings.popupWidth || 560;
   document.documentElement.style.setProperty('--popup-width', `${width}px`);
+  const height = state.settings.popupHeight || 600;
+  document.documentElement.style.setProperty('--popup-height', `${height}px`);
   applyTheme(state.settings.theme || 'auto');
   renderTabs();
   renderList();

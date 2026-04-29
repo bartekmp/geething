@@ -16,7 +16,8 @@ const els = {
   theme: document.getElementById('theme'),
   popupWidth: document.getElementById('popupWidth'),
   popupWidthValue: document.getElementById('popupWidthValue'),
-  testNotification: document.getElementById('test-notification'),
+  popupHeight: document.getElementById('popupHeight'),
+  popupHeightValue: document.getElementById('popupHeightValue'),
   saveIndicator: document.getElementById('save-indicator'),
   version: document.getElementById('version'),
   changelogLink: document.getElementById('changelog-link'),
@@ -75,6 +76,8 @@ function populateForm() {
   els.theme.value = s.theme || 'auto';
   els.popupWidth.value = s.popupWidth || DEFAULT_SETTINGS.popupWidth;
   els.popupWidthValue.value = els.popupWidth.value;
+  els.popupHeight.value = s.popupHeight || DEFAULT_SETTINGS.popupHeight;
+  els.popupHeightValue.value = els.popupHeight.value;
   const manifest = api.runtime.getManifest();
   els.version.textContent = `v${manifest.version}`;
   const repoUrl = manifest.homepage_url || 'https://github.com/bartekmp/geething';
@@ -362,15 +365,12 @@ els.popupWidth.addEventListener('input', () => {
 els.popupWidth.addEventListener('change', () =>
   saveSettings({ popupWidth: Number(els.popupWidth.value) }),
 );
-
-els.testNotification.addEventListener('click', async () => {
-  els.testNotification.disabled = true;
-  try {
-    await sendMessage({ type: 'geething.testNotification' });
-  } finally {
-    els.testNotification.disabled = false;
-  }
+els.popupHeight.addEventListener('input', () => {
+  els.popupHeightValue.value = els.popupHeight.value;
 });
+els.popupHeight.addEventListener('change', () =>
+  saveSettings({ popupHeight: Number(els.popupHeight.value) }),
+);
 
 els.addAccount.addEventListener('click', async () => {
   els.addAccount.disabled = true;
@@ -392,12 +392,3 @@ watchSystemTheme(() => {
 });
 
 loadState().catch((err) => showStatus(err.message || String(err)));
-
-api.management
-  .getSelf()
-  .then((info) => {
-    if (info.installType === 'development') {
-      document.getElementById('test-notification-row').hidden = false;
-    }
-  })
-  .catch(() => {});

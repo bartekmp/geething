@@ -22,14 +22,13 @@ const DEV_DIR = resolve(__dirname, '../.dev-src');
 // copied there), handles geething.getState/refresh/getMessageDetail, and
 // never touches the real Gmail API or OAuth.
 const DEV_SW = `// DEV ONLY — lives only in .dev-src/, never part of the production build
-import { getSettings, saveAccounts, savePersistedAccountState } from '../shared/storage.js';
-import { ACCOUNTS, buildMessages } from './dev-seed.js';
+import { getSeenMessages, getSettings, saveAccounts, savePersistedAccountState, saveSeenMessages } from '../shared/storage.js';
+import { ACCOUNTS, DEV_MESSAGE_DETAILS, buildMessages } from './dev-seed.js';
 import { updateBadge } from './badge.js';
-import { showNewMailNotification } from './notifications.js';
+import { showGroupedMailNotification, showNewMailNotification } from './notifications.js';
 
 const api = typeof browser !== 'undefined' ? browser : globalThis.chrome;
 const accountState = new Map();
-let refreshCount = 0;
 
 async function seed() {
   const msgs = buildMessages();
@@ -37,6 +36,8 @@ async function seed() {
   const t = Date.now();
   for (const [id, messages] of Object.entries(msgs)) {
     accountState.set(id, { messages, unreadCount: messages.length, error: null, lastPolledAt: t });
+    // Mark all seed messages as already seen so they don't trigger notifications on first load.
+    await saveSeenMessages(id, new Set(messages.map((m) => m.id)));
   }
   await savePersistedAccountState(Object.fromEntries(accountState));
   const total = Array.from(accountState.values()).reduce((s, a) => s + a.unreadCount, 0);
@@ -64,23 +65,25 @@ async function handleMessage(msg) {
       return { accounts, settings };
     }
     case 'geething.refresh': {
-      refreshCount++;
       const settings = await getSettings();
-      const msgs = buildMessages();
-      const accountEntries = Object.entries(msgs);
-      const [accountId, messages] = accountEntries[refreshCount % accountEntries.length];
-      const account = ACCOUNTS.find((a) => a.id === accountId) || ACCOUNTS[0];
-      const message = messages[refreshCount % messages.length];
-      if (!account.muted) {
-        await showNewMailNotification(message, account, settings);
+      for (const [accountId, { messages }] of accountState) {
+        const account = ACCOUNTS.find((a) => a.id === accountId);
+        if (!account || account.muted) continue;
+        const seen = await getSeenMessages(accountId);
+        const newMsgs = messages.filter((m) => !seen.has(m.id));
+        // Persist seen before notifying (mirrors production behaviour).
+        await saveSeenMessages(accountId, new Set([...seen, ...messages.map((m) => m.id)]));
+        if (newMsgs.length === 1) {
+          await showNewMailNotification(newMsgs[0], account, settings);
+        } else if (newMsgs.length > 1) {
+          await showGroupedMailNotification(newMsgs, account, settings);
+        }
       }
       return { total: Array.from(accountState.values()).reduce((s, a) => s + a.unreadCount, 0) };
     }
     case 'geething.getMessageDetail': {
-      for (const { messages } of accountState.values()) {
-        const found = messages?.find((m) => m.id === msg.messageId);
-        if (found) return { ...found, bodyText: found.snippet || '', bodyHtml: null };
-      }
+      const detail = DEV_MESSAGE_DETAILS.get(msg.messageId);
+      if (detail) return detail;
       throw new Error('Message not found');
     }
     case 'geething.action':

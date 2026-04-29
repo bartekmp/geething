@@ -43,7 +43,7 @@ export async function showNewMailNotification(message, account, settings) {
   try {
     await api.notifications.create(notificationId, options);
     notificationRegistry.set(notificationId, { accountId: account.id, messageId: message.id });
-  } catch (err) {
+  } catch {
     // Retry without buttons (some platforms reject the buttons field).
     try {
       delete options.buttons;
@@ -105,6 +105,21 @@ export async function showGroupedMailNotification(messages, account, settings) {
   if (!settings.notificationsEnabled) {
     return null;
   }
+
+  // Clear any individual per-message notifications for this account so they
+  // don't stack alongside the grouped one.
+  const prefix = `${NOTIFICATION_PREFIX}${account.id}|`;
+  for (const [id] of notificationRegistry) {
+    if (id.startsWith(prefix)) {
+      try {
+        await api.notifications.clear(id);
+      } catch {
+        // ignore
+      }
+      notificationRegistry.delete(id);
+    }
+  }
+
   const notificationId = `${NOTIFICATION_PREFIX}${account.id}|__group__`;
   const title = `${account.label || account.email}: ${messages.length} new messages`;
   const body = messages
