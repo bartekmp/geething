@@ -6,6 +6,10 @@ A browser extension for multi-account Gmail™ notifications. Get a badge counte
 
 <br clear="left" />
 
+[![geething.eu](https://img.shields.io/badge/geething.eu-website-4f8cff?style=flat)](https://geething.eu)
+[![Firefox Add-ons](https://img.shields.io/amo/v/geething?style=flat&label=Firefox%20Add-ons&logo=firefox-browser&logoColor=white&color=FF7139)](https://addons.mozilla.org/en-US/firefox/addon/geething/)
+[![GitHub release](https://img.shields.io/github/v/release/bartekmp/geething?style=flat&label=latest%20release)](https://github.com/bartekmp/geething/releases/latest)
+
 ## Features
 
 - **Free and open source** — no ads, no tracking, no paywalls; licensed under GPL-3.0
@@ -29,10 +33,10 @@ A browser extension for multi-account Gmail™ notifications. Get a badge counte
 
 ### Manual installation (developer mode)
 
-1. Download the latest `.zip` from [Releases](https://github.com/bartekmp/geething/releases) and unzip it, **or** clone this repository.
-2. Open Firefox and go to `about:debugging`.
-3. Click **This Firefox** → **Load Temporary Add-on…**
-4. Select `src/manifest.json` from the unzipped folder.
+1. Download the latest `.xpi` from [Releases](https://github.com/bartekmp/geething/releases).
+2. Open Firefox and go to `about:addons`.
+3. Click the gear icon → **Install Add-on From File…**
+4. Select the downloaded `.xpi`.
 
 ## Google account warning
 
@@ -50,8 +54,7 @@ To proceed past the warning: click **Advanced** → **Go to Geething (unsafe)**.
 The published AMO release has credentials embedded — you only need this if you're building the extension yourself (e.g. to contribute or fork).
 
 1. Go to [Google Cloud Console](https://console.cloud.google.com/) and create a project, enable the **Gmail API**, and create an OAuth 2.0 client ID (type: **Web application**).
-2. Add an Authorised redirect URI: `https://<your-extension-id>.extensions.allizom.org/`  
-   (Load the extension in `about:debugging` first to find your extension ID.)
+2. Add an Authorised redirect URI: `https://geething.eu/oauth.html`
 3. Copy `src/shared/credentials.example.js` → `src/shared/credentials.js` and fill in your Client ID and Secret.
 4. Run `npm run dev` to launch Firefox with the extension loaded.
 
@@ -60,11 +63,14 @@ The published AMO release has credentials embedded — you only need this if you
 ```bash
 npm install
 npm run dev          # launches Firefox with the extension loaded
+npm run seed         # launches Firefox with pre-seeded fake accounts and emails (no real OAuth)
 npm test             # unit tests (single run)
 npm run test:watch   # watch mode
 npm run test:coverage
 npm run lint
+npm run lint:fix
 npm run format:check
+npm run format
 npx web-ext lint --source-dir=src
 npm run build        # produces a .zip in web-ext-artifacts/
 ```

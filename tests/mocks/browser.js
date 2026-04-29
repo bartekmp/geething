@@ -83,6 +83,13 @@ export function createMockBrowser() {
     },
     tabs: {
       create: vi.fn(async () => ({})),
+      remove: vi.fn(async () => {}),
+      onUpdated: { addListener: vi.fn(), removeListener: vi.fn() },
+    },
+    windows: {
+      create: vi.fn(async () => ({ id: 1, tabs: [{ id: 10 }] })),
+      remove: vi.fn(async () => {}),
+      onRemoved: { addListener: vi.fn(), removeListener: vi.fn() },
     },
     contextMenus: {
       create: vi.fn(),
@@ -103,7 +110,6 @@ export function resetMockBrowser(browser) {
   const clearables = [
     browser.runtime.sendMessage,
     browser.runtime.openOptionsPage,
-    browser.identity.launchWebAuthFlow,
     browser.notifications.create,
     browser.notifications.clear,
     browser.alarms.create,
@@ -112,6 +118,9 @@ export function resetMockBrowser(browser) {
     browser.action.setBadgeBackgroundColor,
     browser.action.setBadgeTextColor,
     browser.tabs.create,
+    browser.tabs.remove,
+    browser.windows.create,
+    browser.windows.remove,
   ];
   for (const fn of clearables) {
     if (fn?.mockClear) {

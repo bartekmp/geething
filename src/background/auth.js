@@ -40,9 +40,57 @@ export async function generatePkcePair() {
 }
 
 export function getRedirectUri() {
-  // browser.identity.getRedirectURL() returns a URL of the form
-  // https://<extension-id>.extensions.allizom.org/ in Firefox.
-  return api.identity.getRedirectURL();
+  return 'https://geething.eu/oauth.html';
+}
+
+function launchAuthWindow(authUrl, redirectUri) {
+  return new Promise((resolve, reject) => {
+    let authWindowId = null;
+    let authTabId = null;
+    let settled = false;
+
+    function finish(fn, value) {
+      if (settled) {
+        return;
+      }
+      settled = true;
+      api.tabs.onUpdated.removeListener(onTabUpdated);
+      api.windows.onRemoved.removeListener(onWindowRemoved);
+      if (authWindowId !== null) {
+        api.windows.remove(authWindowId).catch(() => {});
+      }
+      fn(value);
+    }
+
+    function onTabUpdated(tabId, changeInfo) {
+      if (tabId !== authTabId) {
+        return;
+      }
+      if (changeInfo.url?.startsWith(redirectUri)) {
+        finish(resolve, changeInfo.url);
+      }
+    }
+
+    function onWindowRemoved(windowId) {
+      if (windowId === authWindowId) {
+        finish(reject, new Error('Authentication cancelled.'));
+      }
+    }
+
+    api.tabs.onUpdated.addListener(onTabUpdated);
+    api.windows.onRemoved.addListener(onWindowRemoved);
+
+    api.windows
+      .create({ url: authUrl, type: 'popup', width: 520, height: 680 })
+      .then((win) => {
+        authWindowId = win.id;
+        authTabId = win.tabs?.[0]?.id ?? null;
+        if (authTabId === null) {
+          finish(reject, new Error('Could not open authentication window.'));
+        }
+      })
+      .catch((err) => finish(reject, err));
+  });
 }
 
 export function buildAuthUrl({ clientId, redirectUri, codeChallenge, state, loginHint }) {
@@ -181,10 +229,7 @@ export async function launchOAuth({
     loginHint,
   });
 
-  const redirectUrl = await api.identity.launchWebAuthFlow({
-    url: authUrl,
-    interactive: true,
-  });
+  const redirectUrl = await launchAuthWindow(authUrl, redirectUri);
 
   const { code, state: returnedState } = extractAuthResult(redirectUrl);
   if (returnedState !== state) {
