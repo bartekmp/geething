@@ -31,6 +31,7 @@ export const DEFAULT_SETTINGS = Object.freeze({
   theme: 'auto', // 'auto' | 'light' | 'dark'
   maxMessagesPerAccount: 20,
   autoMarkReadOnOpen: true,
+  markReadBehavior: 'remove', // 'remove' | 'dim'
   keyboardShortcutsEnabled: true,
   popupWidth: 560,
   popupHeight: 600,

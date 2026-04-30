@@ -41,7 +41,7 @@ A browser extension for multi-account Gmail™ notifications. Get a badge counte
 
 ## Google account warning
 
-When adding a Gmail account you will see a Google warning: **"This app hasn't been verified by Google"**. This is expected and safe to dismiss — it appears because Geething is an independent open-source project and Google's verification programme for apps that access Gmail requires a paid third-party security audit (~$3,000). The extension is not enrolled in that programme.
+When adding a Gmail account you will see a Google warning: **"This app hasn't been verified by Google"**. This is expected and safe to dismiss — it appears because Geething is an independent open-source project and Google's verification programme for apps that access Gmail requires a paid third-party security audit. The extension is not yet enrolled in that programme.
 
 You can verify for yourself that the extension is safe:
 - The full source code is in this repository — nothing is hidden or obfuscated.

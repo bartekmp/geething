@@ -14,6 +14,7 @@ const els = {
   maxMessagesPerAccount: document.getElementById('maxMessagesPerAccount'),
   maxMessagesPerAccountValue: document.getElementById('maxMessagesPerAccountValue'),
   autoMarkReadOnOpen: document.getElementById('autoMarkReadOnOpen'),
+  markReadBehavior: document.getElementById('markReadBehavior'),
   keyboardShortcutsEnabled: document.getElementById('keyboardShortcutsEnabled'),
   shortcutsDetail: document.getElementById('shortcuts-detail'),
   theme: document.getElementById('theme'),
@@ -77,6 +78,7 @@ function populateForm() {
   els.maxMessagesPerAccount.value = s.maxMessagesPerAccount || 20;
   els.maxMessagesPerAccountValue.value = s.maxMessagesPerAccount || 20;
   els.autoMarkReadOnOpen.checked = !!s.autoMarkReadOnOpen;
+  els.markReadBehavior.checked = (s.markReadBehavior || 'remove') === 'dim';
   els.keyboardShortcutsEnabled.checked = s.keyboardShortcutsEnabled !== false;
   els.shortcutsDetail.hidden = !els.keyboardShortcutsEnabled.checked;
   els.theme.value = s.theme || 'auto';
@@ -476,6 +478,9 @@ els.maxMessagesPerAccount.addEventListener('change', () =>
 );
 els.autoMarkReadOnOpen.addEventListener('change', () =>
   saveSettings({ autoMarkReadOnOpen: els.autoMarkReadOnOpen.checked }),
+);
+els.markReadBehavior.addEventListener('change', () =>
+  saveSettings({ markReadBehavior: els.markReadBehavior.checked ? 'dim' : 'remove' }),
 );
 els.keyboardShortcutsEnabled.addEventListener('change', () => {
   els.shortcutsDetail.hidden = !els.keyboardShortcutsEnabled.checked;

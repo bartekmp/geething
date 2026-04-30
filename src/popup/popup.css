@@ -203,6 +203,12 @@ body {
   background: var(--bg-hover);
 }
 
+.email-item.read-dimmed .email-row,
+.email-item.read-dimmed .email-subject,
+.email-item.read-dimmed .email-snippet {
+  opacity: 0.38;
+}
+
 .email-row {
   display: flex;
   align-items: baseline;
