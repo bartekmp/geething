@@ -111,6 +111,20 @@ export async function archiveMessage(accessToken, messageId) {
   });
 }
 
+export async function starMessage(accessToken, messageId) {
+  return gmailFetch(accessToken, `/users/me/messages/${messageId}/modify`, {
+    method: 'POST',
+    body: { addLabelIds: ['STARRED'] },
+  });
+}
+
+export async function unstarMessage(accessToken, messageId) {
+  return gmailFetch(accessToken, `/users/me/messages/${messageId}/modify`, {
+    method: 'POST',
+    body: { removeLabelIds: ['STARRED'] },
+  });
+}
+
 export async function getProfile(accessToken) {
   return gmailFetch(accessToken, '/users/me/profile');
 }

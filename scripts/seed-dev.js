@@ -87,7 +87,12 @@ async function handleMessage(msg) {
       if (!detail) throw new Error('Message not found');
       const acctMessages = accountState.get(msg.accountId)?.messages || [];
       const match = acctMessages.find((m) => m.id === msg.messageId);
-      return match?.internalDate ? { ...detail, internalDate: match.internalDate } : detail;
+      if (!match) return detail;
+      return {
+        ...detail,
+        ...(match.internalDate ? { internalDate: match.internalDate } : {}),
+        ...(match.labelIds ? { labelIds: match.labelIds } : {}),
+      };
     }
     case 'geething.reorderAccounts': {
       const { orderedIds = [] } = msg;
@@ -100,7 +105,30 @@ async function handleMessage(msg) {
       await saveAccounts(reordered);
       return { accounts: reordered };
     }
-    case 'geething.action':
+    case 'geething.action': {
+      const acctState = accountState.get(msg.accountId);
+      if (acctState?.messages) {
+        if (msg.action === 'star' || msg.action === 'unstar') {
+          const messages = acctState.messages.map((m) => {
+            if (m.id !== msg.messageId) return m;
+            const labels = m.labelIds || [];
+            return {
+              ...m,
+              labelIds: msg.action === 'star'
+                ? [...new Set([...labels, 'STARRED'])]
+                : labels.filter((l) => l !== 'STARRED'),
+            };
+          });
+          accountState.set(msg.accountId, { ...acctState, messages });
+        } else {
+          const filtered = acctState.messages.filter((m) => m.id !== msg.messageId);
+          accountState.set(msg.accountId, { ...acctState, messages: filtered, unreadCount: filtered.length });
+          const total = Array.from(accountState.values()).reduce((s, a) => s + a.unreadCount, 0);
+          await updateBadge(total);
+        }
+      }
+      return { ok: true };
+    }
     case 'geething.markAllRead': {
       const acctState = accountState.get(msg.accountId);
       if (acctState?.messages) {

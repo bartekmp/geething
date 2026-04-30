@@ -33,6 +33,8 @@ import {
   markAsSpam,
   markAsUnread,
   moveToTrash,
+  starMessage,
+  unstarMessage,
 } from './gmail-api.js';
 
 const api = typeof browser !== 'undefined' ? browser : globalThis.chrome;
@@ -278,17 +280,43 @@ async function performAction({ accountId, messageId, action }) {
     case 'archive':
       await archiveMessage(token, messageId);
       break;
+    case 'star':
+      await starMessage(token, messageId);
+      break;
+    case 'unstar':
+      await unstarMessage(token, messageId);
+      break;
     default:
       throw new Error(`Unknown action: ${action}`);
   }
   // Update local state immediately.
-  const state = accountState.get(accountId);
-  if (state?.messages) {
-    const filtered = state.messages.filter((m) => m.id !== messageId);
-    setAccountState(accountId, { messages: filtered, unreadCount: filtered.length });
+  const acctState = accountState.get(accountId);
+  if (acctState?.messages) {
+    if (action === 'star' || action === 'unstar') {
+      const messages = acctState.messages.map((m) => {
+        if (m.id !== messageId) {
+          return m;
+        }
+        const labels = m.labelIds || [];
+        return {
+          ...m,
+          labelIds:
+            action === 'star'
+              ? [...new Set([...labels, 'STARRED'])]
+              : labels.filter((l) => l !== 'STARRED'),
+        };
+      });
+      setAccountState(accountId, { messages });
+    } else {
+      const filtered = acctState.messages.filter((m) => m.id !== messageId);
+      setAccountState(accountId, { messages: filtered, unreadCount: filtered.length });
+      const total = Array.from(accountState.values()).reduce(
+        (sum, s) => sum + (s.unreadCount || 0),
+        0,
+      );
+      await updateBadge(total);
+    }
   }
-  const total = Array.from(accountState.values()).reduce((sum, s) => sum + (s.unreadCount || 0), 0);
-  await updateBadge(total);
   return { ok: true };
 }
 
