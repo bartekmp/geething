@@ -22,16 +22,3 @@ jobs:
           token: ${{ secrets.RELEASE_PLEASE_TOKEN }}
           config-file: release-please-config.json
           manifest-file: .release-please-manifest.json
-
-      - name: Format release PR files with Prettier
-        if: ${{ steps.release.outputs.pr }}
-        run: |
-          PR_BRANCH=$(echo '${{ steps.release.outputs.pr }}' | jq -r '.headBranchName')
-          git fetch origin "$PR_BRANCH"
-          git checkout "$PR_BRANCH"
-          npm ci --ignore-scripts
-          npx prettier --write "src/**/*.{js,css,html,json}"
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          git diff --quiet || git commit -am "chore: format release PR files"
-          git push
