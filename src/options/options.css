@@ -315,6 +315,33 @@ input[type='checkbox'] {
   border: 1px solid var(--border);
   border-radius: 8px;
   background: var(--bg-primary);
+  transition:
+    opacity 0.15s ease,
+    box-shadow 0.15s ease;
+}
+
+.account-row-wrap.dragging {
+  opacity: 0.4;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+}
+
+.drag-handle {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+  color: var(--text-muted);
+  opacity: 0;
+  cursor: grab;
+  padding: 0 2px;
+  transition: opacity 0.12s ease;
+}
+
+.account-row:hover .drag-handle {
+  opacity: 1;
+}
+
+.drag-handle:active {
+  cursor: grabbing;
 }
 
 .account-row-wrap .account-row {

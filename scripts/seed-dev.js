@@ -29,10 +29,11 @@ import { showGroupedMailNotification, showNewMailNotification } from './notifica
 
 const api = typeof browser !== 'undefined' ? browser : globalThis.chrome;
 const accountState = new Map();
+let devAccounts = [...ACCOUNTS];
 
 async function seed() {
   const msgs = buildMessages();
-  await saveAccounts(ACCOUNTS);
+  await saveAccounts(devAccounts);
   const t = Date.now();
   for (const [id, messages] of Object.entries(msgs)) {
     accountState.set(id, { messages, unreadCount: messages.length, error: null, lastPolledAt: t });
@@ -58,7 +59,7 @@ async function handleMessage(msg) {
   switch (msg.type) {
     case 'geething.getState': {
       const settings = await getSettings();
-      const accounts = ACCOUNTS.map((acc) => ({
+      const accounts = devAccounts.map((acc) => ({
         ...acc,
         ...(accountState.get(acc.id) || { unreadCount: 0, messages: [] }),
       }));
@@ -67,7 +68,7 @@ async function handleMessage(msg) {
     case 'geething.refresh': {
       const settings = await getSettings();
       for (const [accountId, { messages }] of accountState) {
-        const account = ACCOUNTS.find((a) => a.id === accountId);
+        const account = devAccounts.find((a) => a.id === accountId);
         if (!account || account.muted) continue;
         const seen = await getSeenMessages(accountId);
         const newMsgs = messages.filter((m) => !seen.has(m.id));
@@ -87,6 +88,17 @@ async function handleMessage(msg) {
       const acctMessages = accountState.get(msg.accountId)?.messages || [];
       const match = acctMessages.find((m) => m.id === msg.messageId);
       return match?.internalDate ? { ...detail, internalDate: match.internalDate } : detail;
+    }
+    case 'geething.reorderAccounts': {
+      const { orderedIds = [] } = msg;
+      const byId = new Map(devAccounts.map((a) => [a.id, a]));
+      const reordered = orderedIds.map((id) => byId.get(id)).filter(Boolean);
+      for (const acc of byId.values()) {
+        if (!orderedIds.includes(acc.id)) reordered.push(acc);
+      }
+      devAccounts = reordered;
+      await saveAccounts(reordered);
+      return { accounts: reordered };
     }
     case 'geething.action':
     case 'geething.markAllRead': {
