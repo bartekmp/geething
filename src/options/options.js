@@ -102,6 +102,53 @@ function renderAccounts() {
   for (const account of state.accounts) {
     els.accountsList.appendChild(renderAccountRow(account));
   }
+  setupDragSort(els.accountsList);
+}
+
+function setupDragSort(list) {
+  let dragging = null;
+  let dragFromHandle = false;
+
+  list.addEventListener('mousedown', (e) => {
+    dragFromHandle = !!e.target.closest('.drag-handle');
+  });
+
+  for (const wrap of list.querySelectorAll('.account-row-wrap')) {
+    wrap.draggable = true;
+
+    wrap.addEventListener('dragstart', (e) => {
+      if (!dragFromHandle) {
+        e.preventDefault();
+        return;
+      }
+      dragging = wrap;
+      e.dataTransfer.effectAllowed = 'move';
+      requestAnimationFrame(() => wrap.classList.add('dragging'));
+    });
+
+    wrap.addEventListener('dragend', async () => {
+      wrap.classList.remove('dragging');
+      dragging = null;
+      const orderedIds = [...list.querySelectorAll('.account-row-wrap')].map(
+        (w) => w.dataset.accountId,
+      );
+      state.accounts.sort((a, b) => orderedIds.indexOf(a.id) - orderedIds.indexOf(b.id));
+      await sendMessage({ type: 'geething.reorderAccounts', orderedIds }).catch(() => {});
+    });
+
+    wrap.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      if (!dragging || dragging === wrap) {
+        return;
+      }
+      const rect = wrap.getBoundingClientRect();
+      if (e.clientY < rect.top + rect.height / 2) {
+        list.insertBefore(dragging, wrap);
+      } else {
+        list.insertBefore(dragging, wrap.nextSibling);
+      }
+    });
+  }
 }
 
 function buildColorPicker(account, swatch, onSelect) {
@@ -164,9 +211,39 @@ function closePicker(picker, swatch) {
   picker.classList.remove('open');
 }
 
+function makeGripIcon() {
+  const ns = 'http://www.w3.org/2000/svg';
+  const svg = document.createElementNS(ns, 'svg');
+  svg.setAttribute('viewBox', '0 0 10 16');
+  svg.setAttribute('width', '10');
+  svg.setAttribute('height', '16');
+  svg.setAttribute('fill', 'currentColor');
+  svg.setAttribute('aria-hidden', 'true');
+  for (const [cx, cy] of [
+    [3, 3],
+    [7, 3],
+    [3, 8],
+    [7, 8],
+    [3, 13],
+    [7, 13],
+  ]) {
+    const circle = document.createElementNS(ns, 'circle');
+    circle.setAttribute('cx', cx);
+    circle.setAttribute('cy', cy);
+    circle.setAttribute('r', '1.5');
+    svg.appendChild(circle);
+  }
+  return svg;
+}
+
 function renderAccountRow(account) {
   const row = document.createElement('div');
   row.className = 'account-row';
+
+  const handle = document.createElement('span');
+  handle.className = 'drag-handle';
+  handle.title = 'Drag to reorder';
+  handle.appendChild(makeGripIcon());
 
   const swatchWrap = document.createElement('div');
   swatchWrap.className = 'color-picker-wrap';
@@ -261,7 +338,7 @@ function renderAccountRow(account) {
   muteText.textContent = 'Mute';
   muteLabel.append(muteInput, muteText);
 
-  row.append(swatchWrap, labelInput, email, muteLabel, removeBtn);
+  row.append(handle, swatchWrap, labelInput, email, muteLabel, removeBtn);
 
   const labelsRow = document.createElement('div');
   labelsRow.className = 'account-labels-row';
@@ -309,6 +386,7 @@ function renderAccountRow(account) {
 
   const wrap = document.createElement('div');
   wrap.className = 'account-row-wrap';
+  wrap.dataset.accountId = account.id;
   wrap.append(row, labelsRow);
   return wrap;
 }
