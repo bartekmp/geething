@@ -443,6 +443,58 @@ body {
   font-size: 13px;
   color: var(--text-secondary);
   margin-bottom: 16px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.copy-email-btn {
+  background: transparent;
+  border: none;
+  padding: 2px 4px;
+  border-radius: 4px;
+  cursor: pointer;
+  color: var(--text-secondary);
+  display: inline-flex;
+  align-items: center;
+  flex-shrink: 0;
+  transition:
+    color 0.12s ease,
+    background 0.12s ease;
+}
+
+.copy-email-btn:hover {
+  color: var(--text-primary);
+  background: var(--bg-hover);
+}
+
+.detail-date {
+  font-size: 12px;
+  color: var(--text-muted);
+  margin-bottom: 16px;
+  margin-top: -10px;
+}
+
+.copied-blink {
+  animation: copied-blink 1.2s ease;
+}
+
+@keyframes copied-blink {
+  0%,
+  100% {
+    color: var(--text-secondary);
+  }
+  12%,
+  45%,
+  78% {
+    color: var(--accent);
+    opacity: 0.4;
+  }
+  28%,
+  62% {
+    color: var(--accent);
+    opacity: 1;
+  }
 }
 
 .detail-body {

@@ -121,6 +121,12 @@ function setLoading(loading) {
   els.loading.hidden = !loading;
 }
 
+function flashCopied(el) {
+  el.classList.remove('copied-blink');
+  void el.offsetWidth;
+  el.classList.add('copied-blink');
+}
+
 function formatRelativeTime(msEpoch) {
   if (!msEpoch) {
     return '';
@@ -463,7 +469,39 @@ function renderDetail(account, detail) {
   from.className = 'detail-from';
   const fromName = detail.from?.name || detail.from?.email || '';
   const fromEmail = detail.from?.email || '';
-  from.textContent = fromName ? `${fromName} <${fromEmail}>` : fromEmail;
+
+  const fromEmailSpan = document.createElement('span');
+  fromEmailSpan.textContent = fromEmail;
+
+  const fromLabel = document.createElement('span');
+  if (fromName && fromName !== fromEmail) {
+    fromLabel.appendChild(document.createTextNode(`${fromName} <`));
+    fromLabel.appendChild(fromEmailSpan);
+    fromLabel.appendChild(document.createTextNode('>'));
+  } else {
+    fromLabel.appendChild(fromEmailSpan);
+  }
+  from.appendChild(fromLabel);
+
+  if (fromEmail) {
+    const copyBtn = document.createElement('button');
+    copyBtn.type = 'button';
+    copyBtn.className = 'copy-email-btn';
+    copyBtn.title = 'Copy email address';
+    copyBtn.setAttribute('aria-label', 'Copy sender email address');
+    copyBtn.appendChild(
+      makeSvgIcon(
+        'M16 1H4a2 2 0 0 0-2 2v14h2V3h12V1zm3 4H8a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h11a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2zm0 16H8V7h11v14z',
+        13,
+      ),
+    );
+    copyBtn.addEventListener('click', () => {
+      navigator.clipboard.writeText(fromEmail).then(() => {
+        flashCopied(fromEmailSpan);
+      });
+    });
+    from.appendChild(copyBtn);
+  }
 
   const body = document.createElement('div');
   body.className = 'detail-body';
@@ -474,7 +512,16 @@ function renderDetail(account, detail) {
     body.appendChild(makeEmailIframe(buildPlainTextDoc(formatPlainTextEmail(rawText))));
   }
 
-  els.detailContent.append(subject, from, body);
+  const date = document.createElement('div');
+  date.className = 'detail-date';
+  date.textContent = detail.internalDate
+    ? new Date(detail.internalDate).toLocaleString(undefined, {
+        dateStyle: 'medium',
+        timeStyle: 'short',
+      })
+    : '';
+
+  els.detailContent.append(subject, from, date, body);
 }
 
 els.backBtn.addEventListener('click', () => {
