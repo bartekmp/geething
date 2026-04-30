@@ -53,10 +53,13 @@ function setAccountState(accountId, patch) {
 async function pollAccount(account, { isInitial = false } = {}) {
   try {
     const token = await getValidAccessToken(account.id);
-    const ids = await fetchUnreadMessageIds(token, {
-      maxResults: MAX_FETCH_MESSAGES,
-      labelIds: account.watchedLabels?.length ? account.watchedLabels : ['INBOX'],
-    });
+    const labels = account.watchedLabels?.length ? account.watchedLabels : ['INBOX'];
+    const idSets = await Promise.all(
+      labels.map((label) =>
+        fetchUnreadMessageIds(token, { maxResults: MAX_FETCH_MESSAGES, labelIds: [label] }),
+      ),
+    );
+    const ids = [...new Set(idSets.flat())];
     const seen = await getSeenMessages(account.id);
 
     const messages = [];
