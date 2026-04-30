@@ -7,6 +7,8 @@ const api = typeof browser !== 'undefined' ? browser : globalThis.chrome;
 const ICONS = Object.freeze({
   reply: 'M10 9V5l-7 7 7 7v-4.1c5 0 8.5 1.6 11 5.1-1-5-4-10-11-10z',
   markRead: 'M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z',
+  markUnread:
+    'M20 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 14H4V8l8 5 8-5v10zm-8-7L4 6h16l-8 5z',
   archive:
     'M20.54 5.23l-1.39-1.68C18.88 3.21 18.47 3 18 3H6c-.47 0-.88.21-1.16.55L3.46 5.23C3.17 5.57 3 6.02 3 6.5V19c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V6.5c0-.48-.17-.93-.46-1.27zM12 17.5L6.5 12H10v-2h4v2h3.5L12 17.5zM5.12 5l.81-1h12l.94 1H5.12z',
   spam: 'M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z',
@@ -46,6 +48,9 @@ const state = {
   activeAccountId: null,
   pageByAccount: {},
 };
+
+// Message IDs marked read in 'dim' mode — cleared on every loadState().
+const dimmedMessages = new Set();
 
 // ── Utilities ──────────────────────────────────────────────────────────────
 function clearNode(node) {
@@ -108,6 +113,49 @@ function makeStarBtn(accountId, messageId, isStarred) {
     starred = !starred;
     update();
     performAction(accountId, messageId, starred ? 'star' : 'unstar');
+  });
+  return btn;
+}
+
+// Reference to the mark-read toggle rendered in the detail view, so openDetail
+// can flip it to "read" after autoMarkReadOnOpen fires.
+let detailMarkReadBtn = null;
+
+function makeMarkReadToggleBtn(accountId, messageId, isRead, { onMarkRead } = {}) {
+  let read = isRead;
+  const btn = document.createElement('button');
+  btn.type = 'button';
+
+  function update() {
+    clearNode(btn);
+    btn.className = 'action-icon-btn';
+    btn.title = read ? 'Mark as unread' : 'Mark as read';
+    btn.setAttribute('aria-label', read ? 'Mark as unread' : 'Mark as read');
+    btn.appendChild(makeSvgIcon(read ? ICONS.markUnread : ICONS.markRead));
+    const labelEl = document.createElement('span');
+    labelEl.className = 'action-icon-label';
+    labelEl.textContent = read ? 'Mark unread' : 'Mark read';
+    btn.appendChild(labelEl);
+  }
+
+  btn.setRead = (val) => {
+    if (read !== val) {
+      read = val;
+      update();
+    }
+  };
+
+  update();
+  btn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    read = !read;
+    update();
+    if (read) {
+      performAction(accountId, messageId, 'markRead');
+      onMarkRead?.();
+    } else {
+      performAction(accountId, messageId, 'markUnread');
+    }
   });
   return btn;
 }
@@ -328,7 +376,7 @@ function renderList() {
 
 function renderEmailItem(account, message) {
   const li = document.createElement('li');
-  li.className = 'email-item';
+  li.className = `email-item${dimmedMessages.has(message.id) ? ' read-dimmed' : ''}`;
   li.style.borderLeftColor = account.color || 'transparent';
   li.tabIndex = 0;
   li.dataset.accountId = account.id;
@@ -357,7 +405,7 @@ function renderEmailItem(account, message) {
   actions.append(
     makeIconBtn('reply', 'Reply', () => openReply(account, message)),
     makeStarBtn(account.id, message.id, (message.labelIds || []).includes('STARRED')),
-    makeIconBtn('markRead', 'Mark read', () => performAction(account.id, message.id, 'markRead')),
+    makeMarkReadToggleBtn(account.id, message.id, dimmedMessages.has(message.id)),
     makeIconBtn('archive', 'Archive', () => performAction(account.id, message.id, 'archive')),
     makeIconBtn('spam', 'Spam', () => performAction(account.id, message.id, 'spam'), {
       danger: true,
@@ -401,7 +449,17 @@ function openReply(account, message) {
 async function performAction(accountId, messageId, action) {
   try {
     await sendMessage({ type: 'geething.action', accountId, messageId, action });
-    await refresh({ silent: true });
+    if (action === 'markRead' && state.settings?.markReadBehavior === 'dim') {
+      dimmedMessages.add(messageId);
+      els.list.querySelector(`[data-message-id="${messageId}"]`)?.classList.add('read-dimmed');
+      document.activeElement?.blur();
+    } else if (action === 'markUnread' && dimmedMessages.has(messageId)) {
+      dimmedMessages.delete(messageId);
+      els.list.querySelector(`[data-message-id="${messageId}"]`)?.classList.remove('read-dimmed');
+      document.activeElement?.blur();
+    } else {
+      await refresh({ silent: true });
+    }
   } catch (err) {
     showError(err.message || String(err));
   }
@@ -433,6 +491,7 @@ async function openDetail(account, message) {
     renderDetail(account, detail);
     if (state.settings?.autoMarkReadOnOpen) {
       performAction(account.id, message.id, 'markRead');
+      detailMarkReadBtn?.setRead(true);
     }
   } catch (err) {
     clearNode(els.detailContent);
@@ -458,15 +517,17 @@ function renderDetail(account, detail) {
   clearNode(els.detailContent);
   clearNode(els.detailActions);
 
+  detailMarkReadBtn = makeMarkReadToggleBtn(account.id, detail.id, dimmedMessages.has(detail.id), {
+    onMarkRead: () => {
+      els.detail.hidden = true;
+    },
+  });
+
   // Action buttons in the topbar of the detail view.
   els.detailActions.append(
     makeIconBtn('reply', 'Reply', () => openReply(account, detail)),
     makeStarBtn(account.id, detail.id, (detail.labelIds || []).includes('STARRED')),
-    makeIconBtn('markRead', 'Mark read', () =>
-      performAction(account.id, detail.id, 'markRead').then(() => {
-        els.detail.hidden = true;
-      }),
-    ),
+    detailMarkReadBtn,
     makeIconBtn('archive', 'Archive', () =>
       performAction(account.id, detail.id, 'archive').then(() => {
         els.detail.hidden = true;
@@ -625,6 +686,7 @@ async function loadState() {
   const result = await sendMessage({ type: 'geething.getState' });
   state.accounts = result.accounts || [];
   state.settings = result.settings || {};
+  dimmedMessages.clear();
   if (!state.activeAccountId || !state.accounts.find((a) => a.id === state.activeAccountId)) {
     state.activeAccountId = state.accounts[0]?.id || null;
   }

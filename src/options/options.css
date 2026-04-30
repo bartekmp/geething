@@ -424,6 +424,13 @@ input[type='checkbox'] {
   margin: 0;
 }
 
+.setting-hint {
+  color: var(--text-muted);
+  font-size: 11px;
+  margin: -4px 0 4px;
+  line-height: 1.5;
+}
+
 .shortcuts-note {
   margin: 0 0 12px;
 }
