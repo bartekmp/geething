@@ -26,6 +26,7 @@ import {
 } from './notifications.js';
 import {
   archiveMessage,
+  fetchLabels,
   fetchMessageDetail,
   fetchMessageMetadata,
   fetchUnreadMessageIds,
@@ -237,6 +238,10 @@ async function handleMessage(msg, _sender) {
         await clearBadge();
       }
       return { ok: true };
+    }
+    case 'geething.getLabels': {
+      const token = await getValidAccessToken(msg.accountId);
+      return fetchLabels(token);
     }
     case 'geething.settingsChanged': {
       await rescheduleAlarm();

@@ -90,7 +90,7 @@ function populateForm() {
   els.changelogLink.href = `${repoUrl}/blob/main/CHANGELOG.md`;
 }
 
-function renderAccounts() {
+async function renderAccounts() {
   clearNode(els.accountsList);
   if (!state.accounts.length) {
     const p = document.createElement('p');
@@ -100,7 +100,7 @@ function renderAccounts() {
     return;
   }
   for (const account of state.accounts) {
-    els.accountsList.appendChild(renderAccountRow(account));
+    els.accountsList.appendChild(await renderAccountRow(account));
   }
   setupDragSort(els.accountsList);
 }
@@ -236,7 +236,7 @@ function makeGripIcon() {
   return svg;
 }
 
-function renderAccountRow(account) {
+async function renderAccountRow(account) {
   const row = document.createElement('div');
   row.className = 'account-row';
 
@@ -347,19 +347,26 @@ function renderAccountRow(account) {
   labelsCaption.textContent = 'Watch:';
   labelsRow.appendChild(labelsCaption);
 
-  const WATCH_LABELS = [
-    { id: 'INBOX', name: 'Inbox' },
-    { id: 'STARRED', name: 'Starred' },
-    { id: 'IMPORTANT', name: 'Important' },
-  ];
   const currentLabels = account.watchedLabels?.length ? account.watchedLabels : ['INBOX'];
 
-  for (const { id: labelId, name: labelName } of WATCH_LABELS) {
+  let availableLabels;
+  try {
+    availableLabels = await sendMessage({ type: 'geething.getLabels', accountId: account.id });
+  } catch {
+    availableLabels = [
+      { id: 'INBOX', name: 'Inbox' },
+      { id: 'STARRED', name: 'Starred' },
+      { id: 'IMPORTANT', name: 'Important' },
+    ];
+  }
+
+  function addLabelChip(labelId, labelName) {
     const chip = document.createElement('label');
     chip.className = 'label-chip';
     const cb = document.createElement('input');
     cb.type = 'checkbox';
     cb.checked = currentLabels.includes(labelId);
+    cb.dataset.labelId = labelId;
     cb.addEventListener('change', async () => {
       const allCbs = labelsRow.querySelectorAll('input[type=checkbox]');
       const selected = Array.from(allCbs)
@@ -377,11 +384,39 @@ function renderAccountRow(account) {
       account.watchedLabels = selected;
       flashSaved();
     });
-    cb.dataset.labelId = labelId;
     const chipText = document.createElement('span');
     chipText.textContent = labelName;
     chip.append(cb, chipText);
     labelsRow.appendChild(chip);
+  }
+
+  const LABELS_INITIAL = 10;
+  const LABELS_COLLAPSE_THRESHOLD = 15;
+  const hidden =
+    availableLabels.length > LABELS_COLLAPSE_THRESHOLD ? availableLabels.slice(LABELS_INITIAL) : [];
+  const visible = hidden.length ? availableLabels.slice(0, LABELS_INITIAL) : availableLabels;
+
+  for (const { id: labelId, name: labelName } of visible) {
+    addLabelChip(labelId, labelName);
+  }
+
+  if (hidden.length) {
+    // If any of the hidden labels are currently selected, reveal them immediately.
+    const hasSelectedHidden = hidden.some(({ id }) => currentLabels.includes(id));
+    const expandPill = document.createElement('button');
+    expandPill.type = 'button';
+    expandPill.className = 'label-expand-pill';
+    expandPill.textContent = `+${hidden.length} more`;
+    expandPill.addEventListener('click', () => {
+      for (const { id: labelId, name: labelName } of hidden) {
+        addLabelChip(labelId, labelName);
+      }
+      expandPill.remove();
+    });
+    labelsRow.appendChild(expandPill);
+    if (hasSelectedHidden) {
+      expandPill.click();
+    }
   }
 
   const wrap = document.createElement('div');

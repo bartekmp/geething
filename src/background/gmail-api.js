@@ -129,6 +129,48 @@ export async function getProfile(accessToken) {
   return gmailFetch(accessToken, '/users/me/profile');
 }
 
+const SYSTEM_LABEL_NAMES = {
+  INBOX: 'Inbox',
+  STARRED: 'Starred',
+  IMPORTANT: 'Important',
+  SENT: 'Sent',
+  DRAFT: 'Drafts',
+  SPAM: 'Spam',
+  TRASH: 'Trash',
+};
+
+// Returns labels suitable for watching unread messages.
+// Includes always-useful system labels and any user-created labels that aren't hidden.
+export async function fetchLabels(accessToken) {
+  const data = await gmailFetch(accessToken, '/users/me/labels');
+  const all = data.labels || [];
+  const result = [];
+  for (const label of all) {
+    if (label.type === 'system') {
+      if (label.id in SYSTEM_LABEL_NAMES) {
+        result.push({ id: label.id, name: SYSTEM_LABEL_NAMES[label.id], type: 'system' });
+      }
+    } else if (label.type === 'user' && label.labelListVisibility !== 'labelHide') {
+      result.push({ id: label.id, name: label.name, type: 'user' });
+    }
+  }
+  // System labels first, then user labels alphabetically.
+  const systemOrder = Object.keys(SYSTEM_LABEL_NAMES);
+  result.sort((a, b) => {
+    if (a.type === 'system' && b.type === 'system') {
+      return systemOrder.indexOf(a.id) - systemOrder.indexOf(b.id);
+    }
+    if (a.type === 'system') {
+      return -1;
+    }
+    if (b.type === 'system') {
+      return 1;
+    }
+    return a.name.localeCompare(b.name);
+  });
+  return result;
+}
+
 export function parseMessage(raw, { includeBody = false } = {}) {
   const headers = indexHeaders(raw.payload?.headers || []);
   const parsed = {

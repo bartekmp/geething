@@ -353,6 +353,7 @@ input[type='checkbox'] {
 .account-labels-row {
   display: flex;
   align-items: center;
+  flex-wrap: wrap;
   gap: 8px;
   padding: 5px 10px 7px 42px;
   border-top: 1px solid var(--border);
@@ -377,6 +378,22 @@ input[type='checkbox'] {
 .label-chip input[type='checkbox'] {
   width: 13px;
   height: 13px;
+}
+
+.label-expand-pill {
+  font-size: 11px;
+  color: var(--text-muted);
+  background: var(--border);
+  border: none;
+  border-radius: 10px;
+  padding: 1px 7px;
+  cursor: pointer;
+  line-height: 18px;
+}
+
+.label-expand-pill:hover {
+  background: var(--border-strong, var(--border));
+  color: var(--text-secondary);
 }
 
 .mute-toggle {

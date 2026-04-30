@@ -13,7 +13,7 @@ A browser extension for multi-account Gmail™ notifications. Get a badge counte
 ## Features
 
 - **Free and open source** — no ads, no tracking, no paywalls; licensed under GPL-3.0
-- **Multiple Gmail™ accounts** — add as many as you need, each with its own color and label
+- **Multiple Gmail™ accounts** — add as many as you need, each with its own color and label; choose which Gmail labels to watch per account (Inbox, Starred, custom labels, etc.)
 - **Badge counter** — total unread count across all accounts, shown on the toolbar icon
 - **Desktop notifications** — notified the moment new mail arrives; click to open, or use the built-in **Mark as Read** / **Archive** buttons directly in the notification
 - **Popup** — tabbed per-account view with sender, subject, and snippet; click any email to read it inline
