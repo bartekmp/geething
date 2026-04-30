@@ -12,6 +12,9 @@ const ICONS = Object.freeze({
   spam: 'M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z',
   trash: 'M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z',
   open: 'M19 19H5V5h7V3H5a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7h-2v7zM14 3v2h3.59l-9.83 9.83 1.41 1.41L19 6.41V10h2V3h-7z',
+  star: 'M22 9.24l-7.19-.62L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21 12 17.27 18.18 21l-1.63-7.03L22 9.24zm-10 6.91l-3.76 2.27 1-4.28-3.32-2.88 4.38-.38L12 6.1l1.71 4.28 4.38.38-3.32 2.88 1 4.28L12 16.15z',
+  starFilled:
+    'M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z',
 });
 
 const els = {
@@ -78,6 +81,33 @@ function makeIconBtn(iconKey, label, handler, { danger = false } = {}) {
   btn.addEventListener('click', (e) => {
     e.stopPropagation();
     handler();
+  });
+  return btn;
+}
+
+function makeStarBtn(accountId, messageId, isStarred) {
+  const btn = document.createElement('button');
+  btn.type = 'button';
+  let starred = isStarred;
+
+  function update() {
+    clearNode(btn);
+    btn.className = `action-icon-btn${starred ? ' starred' : ''}`;
+    btn.title = starred ? 'Remove star' : 'Star';
+    btn.setAttribute('aria-label', starred ? 'Remove star' : 'Star');
+    btn.appendChild(makeSvgIcon(starred ? ICONS.starFilled : ICONS.star));
+    const labelEl = document.createElement('span');
+    labelEl.className = 'action-icon-label';
+    labelEl.textContent = starred ? 'Unstar' : 'Star';
+    btn.appendChild(labelEl);
+  }
+
+  update();
+  btn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    starred = !starred;
+    update();
+    performAction(accountId, messageId, starred ? 'star' : 'unstar');
   });
   return btn;
 }
@@ -326,6 +356,7 @@ function renderEmailItem(account, message) {
   actions.className = 'email-actions';
   actions.append(
     makeIconBtn('reply', 'Reply', () => openReply(account, message)),
+    makeStarBtn(account.id, message.id, (message.labelIds || []).includes('STARRED')),
     makeIconBtn('markRead', 'Mark read', () => performAction(account.id, message.id, 'markRead')),
     makeIconBtn('archive', 'Archive', () => performAction(account.id, message.id, 'archive')),
     makeIconBtn('spam', 'Spam', () => performAction(account.id, message.id, 'spam'), {
@@ -430,6 +461,7 @@ function renderDetail(account, detail) {
   // Action buttons in the topbar of the detail view.
   els.detailActions.append(
     makeIconBtn('reply', 'Reply', () => openReply(account, detail)),
+    makeStarBtn(account.id, detail.id, (detail.labelIds || []).includes('STARRED')),
     makeIconBtn('markRead', 'Mark read', () =>
       performAction(account.id, detail.id, 'markRead').then(() => {
         els.detail.hidden = true;

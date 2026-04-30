@@ -288,6 +288,15 @@ body {
   border-color: var(--danger);
 }
 
+.action-icon-btn.starred {
+  color: #f4b400;
+}
+
+.action-icon-btn.starred:hover {
+  color: #f4b400;
+  background: var(--bg-hover);
+}
+
 /* Label hidden by default, shown on hover */
 .action-icon-label {
   display: none;
