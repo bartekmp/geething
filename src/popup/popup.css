@@ -468,34 +468,32 @@ body {
   background: var(--bg-hover);
 }
 
-.copied-toast {
-  position: fixed;
-  bottom: 16px;
-  left: 50%;
-  transform: translateX(-50%);
-  background: var(--text-primary);
-  color: var(--bg-card);
+.detail-date {
   font-size: 12px;
-  padding: 5px 12px;
-  border-radius: 12px;
-  pointer-events: none;
-  opacity: 0;
-  z-index: 9999;
+  color: var(--text-muted);
+  margin-bottom: 16px;
+  margin-top: -10px;
 }
 
-.copied-toast--fade {
-  animation: toast-fade 1.6s ease forwards;
+.copied-blink {
+  animation: copied-blink 1.2s ease;
 }
 
-@keyframes toast-fade {
-  0% {
-    opacity: 1;
-  }
-  60% {
-    opacity: 1;
-  }
+@keyframes copied-blink {
+  0%,
   100% {
-    opacity: 0;
+    color: var(--text-secondary);
+  }
+  12%,
+  45%,
+  78% {
+    color: var(--accent);
+    opacity: 0.4;
+  }
+  28%,
+  62% {
+    color: var(--accent);
+    opacity: 1;
   }
 }
 

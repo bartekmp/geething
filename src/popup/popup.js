@@ -121,18 +121,10 @@ function setLoading(loading) {
   els.loading.hidden = !loading;
 }
 
-function showCopiedToast() {
-  let toast = document.getElementById('copied-toast');
-  if (!toast) {
-    toast = document.createElement('div');
-    toast.id = 'copied-toast';
-    toast.className = 'copied-toast';
-    toast.textContent = 'Copied!';
-    document.body.appendChild(toast);
-  }
-  toast.classList.remove('copied-toast--fade');
-  void toast.offsetWidth;
-  toast.classList.add('copied-toast--fade');
+function flashCopied(el) {
+  el.classList.remove('copied-blink');
+  void el.offsetWidth;
+  el.classList.add('copied-blink');
 }
 
 function formatRelativeTime(msEpoch) {
@@ -478,9 +470,18 @@ function renderDetail(account, detail) {
   const fromName = detail.from?.name || detail.from?.email || '';
   const fromEmail = detail.from?.email || '';
 
-  const fromText = document.createElement('span');
-  fromText.textContent = fromName ? `${fromName} <${fromEmail}>` : fromEmail;
-  from.appendChild(fromText);
+  const fromEmailSpan = document.createElement('span');
+  fromEmailSpan.textContent = fromEmail;
+
+  const fromLabel = document.createElement('span');
+  if (fromName && fromName !== fromEmail) {
+    fromLabel.appendChild(document.createTextNode(`${fromName} <`));
+    fromLabel.appendChild(fromEmailSpan);
+    fromLabel.appendChild(document.createTextNode('>'));
+  } else {
+    fromLabel.appendChild(fromEmailSpan);
+  }
+  from.appendChild(fromLabel);
 
   if (fromEmail) {
     const copyBtn = document.createElement('button');
@@ -496,7 +497,7 @@ function renderDetail(account, detail) {
     );
     copyBtn.addEventListener('click', () => {
       navigator.clipboard.writeText(fromEmail).then(() => {
-        showCopiedToast();
+        flashCopied(fromEmailSpan);
       });
     });
     from.appendChild(copyBtn);
@@ -511,7 +512,16 @@ function renderDetail(account, detail) {
     body.appendChild(makeEmailIframe(buildPlainTextDoc(formatPlainTextEmail(rawText))));
   }
 
-  els.detailContent.append(subject, from, body);
+  const date = document.createElement('div');
+  date.className = 'detail-date';
+  date.textContent = detail.internalDate
+    ? new Date(detail.internalDate).toLocaleString(undefined, {
+        dateStyle: 'medium',
+        timeStyle: 'short',
+      })
+    : '';
+
+  els.detailContent.append(subject, from, date, body);
 }
 
 els.backBtn.addEventListener('click', () => {

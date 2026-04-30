@@ -83,8 +83,10 @@ async function handleMessage(msg) {
     }
     case 'geething.getMessageDetail': {
       const detail = DEV_MESSAGE_DETAILS.get(msg.messageId);
-      if (detail) return detail;
-      throw new Error('Message not found');
+      if (!detail) throw new Error('Message not found');
+      const acctMessages = accountState.get(msg.accountId)?.messages || [];
+      const match = acctMessages.find((m) => m.id === msg.messageId);
+      return match?.internalDate ? { ...detail, internalDate: match.internalDate } : detail;
     }
     case 'geething.action':
     case 'geething.markAllRead': {
