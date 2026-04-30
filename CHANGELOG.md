@@ -3,6 +3,22 @@
 All notable changes to Geething are documented here.
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/). Versioning follows [Semantic Versioning](https://semver.org/).
 
+## [0.6.0](https://github.com/bartekmp/geething/compare/geething-v0.5.0...geething-v0.6.0) (2026-04-30)
+
+
+### Features
+
+* account drag-and-drop reordering ([#31](https://github.com/bartekmp/geething/issues/31)) ([9fe316c](https://github.com/bartekmp/geething/commit/9fe316c7b5003b9296c40871c519aa13b16c7cd7))
+* configurable mark-as-read behavior ([#36](https://github.com/bartekmp/geething/issues/36)) ([2af67c9](https://github.com/bartekmp/geething/commit/2af67c94a9ed7640c91ad3f26f84a81830faf09f))
+* star marking action ([#32](https://github.com/bartekmp/geething/issues/32)) ([51d54fc](https://github.com/bartekmp/geething/commit/51d54fc0eeb7069f1ebe074af05d254e7ab7b17b))
+* watch custom labels per inbox ([#34](https://github.com/bartekmp/geething/issues/34)) ([52e42aa](https://github.com/bartekmp/geething/commit/52e42aa7d639c1dec81a38ad160a4d85ebe78f0e))
+
+
+### Bug Fixes
+
+* copy sender address, display date in preview ([#28](https://github.com/bartekmp/geething/issues/28)) ([218111a](https://github.com/bartekmp/geething/commit/218111a8e0792b60d8c2de97e35fec6126cafeaf))
+* label watching behavior ([#30](https://github.com/bartekmp/geething/issues/30)) ([7b255e4](https://github.com/bartekmp/geething/commit/7b255e49a8543dcfb899f40faa2bb59e6cfd7173))
+
 ## [0.5.0](https://github.com/bartekmp/geething/compare/geething-v0.4.0...geething-v0.5.0) (2026-04-29)
 
 
