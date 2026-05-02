@@ -658,6 +658,174 @@ body {
   text-align: center;
 }
 
+/* ── Thread items ───────────────────────────────────── */
+.thread-count-pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 18px;
+  height: 16px;
+  padding: 0 5px;
+  border-radius: 8px;
+  background: var(--accent);
+  color: #fff;
+  font-size: 10px;
+  font-weight: 600;
+  flex-shrink: 0;
+}
+
+.thread-messages {
+  margin-top: 6px;
+  border-top: 1px solid var(--border);
+  list-style: none;
+  padding: 0;
+  margin-left: 10px;
+  border-left: 2px solid color-mix(in srgb, var(--accent) 45%, transparent);
+}
+
+.thread-sub-item {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 8px 0 8px 8px;
+  border-bottom: 1px solid var(--border);
+  cursor: pointer;
+  transition: background 0.1s ease;
+}
+
+.thread-sub-item:last-child {
+  border-bottom: none;
+}
+
+.thread-sub-item:hover {
+  background: var(--bg-hover);
+}
+
+.thread-sub-item:hover .email-actions,
+.thread-sub-item:focus-within .email-actions {
+  opacity: 1;
+}
+
+.thread-sub-sender {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-primary);
+  flex: 1;
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.thread-sub-snippet {
+  font-size: 12px;
+  color: var(--text-secondary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* ── Selection mode ─────────────────────────────────── */
+
+/* Indent subject/snippet to align under sender when checkbox is present */
+.email-item:has(> .email-row > .email-checkbox) .email-subject,
+.email-item:has(> .email-row > .email-checkbox) .email-snippet {
+  padding-left: 24px; /* checkbox 16px + row gap 8px */
+}
+
+.email-checkbox {
+  appearance: none;
+  -webkit-appearance: none;
+  width: 16px;
+  height: 16px;
+  border: 1.5px solid var(--text-muted);
+  border-radius: 3px;
+  cursor: pointer;
+  flex-shrink: 0;
+  position: relative;
+  transition:
+    background 0.12s ease,
+    border-color 0.12s ease;
+}
+
+.email-checkbox:checked {
+  background: var(--accent);
+  border-color: var(--accent);
+}
+
+.email-checkbox:checked::after {
+  content: '';
+  position: absolute;
+  left: 3px;
+  top: 1px;
+  width: 7px;
+  height: 4px;
+  border-left: 2px solid #fff;
+  border-bottom: 2px solid #fff;
+  transform: rotate(-45deg);
+}
+
+.icon-btn.active {
+  background: var(--bg-hover);
+  color: var(--accent);
+  border-color: var(--border);
+}
+
+/* ── Bulk action bar ────────────────────────────────── */
+.bulk-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 7px 12px;
+  background: var(--bg-secondary);
+  border-top: 1px solid var(--border);
+  flex-shrink: 0;
+  gap: 8px;
+}
+
+.bulk-count {
+  font-size: 13px;
+  color: var(--text-secondary);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.bulk-actions {
+  display: flex;
+  gap: 4px;
+  flex-wrap: wrap;
+}
+
+.bulk-action-btn {
+  padding: 4px 11px;
+  border-radius: 5px;
+  border: 1px solid var(--border);
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  font-size: 12px;
+  cursor: pointer;
+  transition:
+    background 0.12s ease,
+    border-color 0.12s ease,
+    color 0.12s ease;
+}
+
+.bulk-action-btn:hover:not(:disabled) {
+  background: var(--bg-hover);
+  border-color: var(--text-muted);
+}
+
+.bulk-action-btn.danger:hover:not(:disabled) {
+  background: var(--danger);
+  color: #fff;
+  border-color: var(--danger);
+}
+
+.bulk-action-btn:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
 /* ── Dark mode via media query (auto mode) ──────────── */
 @media (prefers-color-scheme: dark) {
   html:not(.theme-light) {

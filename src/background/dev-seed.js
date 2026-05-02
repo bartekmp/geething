@@ -773,6 +773,63 @@ We look forward to seeing you.
 Kind regards,
 Medicover Patient Services`;
 
+// ── New messages for threaded conversations ──────────────────────────────────
+
+// dev-msg-1b — same PR thread: merge notification
+const BODY_TEXT_GH_MERGED = `\
+bartekmp merged pull request #7 **"feat: add dark mode"** in *geething*.
+
+Branch \`feature/dark-mode\` merged into \`main\`.
+
+Commits merged:
+· 3f81de2  feat(popup): add dark mode with CSS variables and auto theme
+
+View the merge: https://github.com/bartekmp/geething/pull/7
+
+— GitHub`;
+
+// dev-msg-3b — same hiking thread: Marta's follow-up
+const BODY_TEXT_MARTA_2 = `\
+One more thing — are we driving or coordinating with Piotr? Parking at the Chojnik trailhead is a nightmare on weekends.
+
+Also: instead of the usual Chojnik loop, what about the blue trail all the way up to Śnieżka? It's ~18km but the forecast for Saturday is actually really good now, so no rush. Totally fine if you'd rather keep it shorter though!
+
+Let me know,
+Marta`;
+
+// dev-msg-5b — same roadmap thread: follow-up from Piotr
+const BODY_TEXT_ROADMAP_REPLY = `\
+Team,
+
+A few clarifications from this morning's call:
+
+1. **DB migration (Karolina)** — go-live confirmed Nov 30. Staging sign-off needed by Nov 25. Join #infra-migration on Slack for updates.
+
+2. **Onboarding v2 (Michał)** — design review pushed to Nov 18 due to re-scoping. ETA will be revisited at the next sync.
+
+3. **API rate limiting** is now unblocked. Piotr N. will own it — Michał, please create the Jira ticket and assign.
+
+Updated deck: https://docs.google.com/presentation/d/example2
+
+— Piotr`;
+
+// dev-msg-7b — same auth-refactor thread: Karolina's follow-up after review
+const BODY_TEXT_KAROLINA_FOLLOWUP = `\
+Hey,
+
+Quick update — I addressed Piotr's review comments this morning:
+
+- Capped the token retry count at 3 (no more infinite loops on persistent 401s)
+- Fixed the \`isLoading\` state not resetting on the error path (added a \`finally\` block)
+- Removed \`legacyAuth.js\` entirely — clean break as discussed
+
+PR is ready for final review. Could you take a look before EOD?
+
+Also: Piotr flagged a potential overlap with what Michał is doing in the onboarding flow — he still has two places using the old auth hook. I've left a note in the PR description but wanted to give you a heads-up.
+
+Thanks,
+Karolina`;
+
 // ── Dev attachment helpers ─────────────────────────────────────────────────
 // Encodes a short text label into base64url so dev attachments are actually
 // downloadable (the file contains the label text — good enough for UI testing).
@@ -791,11 +848,24 @@ export const DEV_MESSAGE_DETAILS = new Map([
     'dev-msg-1',
     {
       id: 'dev-msg-1',
+      threadId: 'thread-gh-pr',
       subject: '[geething] Pull request #7 approved',
       from: { name: 'GitHub', email: 'noreply@github.com' },
       snippet: 'Your pull request "feat: add dark mode" was approved by bartekmp.',
       bodyHtml: null,
       bodyText: BODY_TEXT_GITHUB,
+    },
+  ],
+  [
+    'dev-msg-1b',
+    {
+      id: 'dev-msg-1b',
+      threadId: 'thread-gh-pr',
+      subject: '[geething] Pull request #7 merged',
+      from: { name: 'GitHub', email: 'noreply@github.com' },
+      snippet: 'bartekmp merged pull request #7 "feat: add dark mode" into main.',
+      bodyHtml: null,
+      bodyText: BODY_TEXT_GH_MERGED,
     },
   ],
   [
@@ -813,11 +883,24 @@ export const DEV_MESSAGE_DETAILS = new Map([
     'dev-msg-3',
     {
       id: 'dev-msg-3',
+      threadId: 'thread-hiking',
       subject: 'Re: Weekend hiking plans',
       from: { name: 'Marta Kowalczyk', email: 'marta.kowalczyk@gmail.com' },
       snippet: "Sounds perfect! I'll bring the map and snacks.",
       bodyHtml: null,
       bodyText: BODY_TEXT_MARTA,
+    },
+  ],
+  [
+    'dev-msg-3b',
+    {
+      id: 'dev-msg-3b',
+      threadId: 'thread-hiking',
+      subject: 'Re: Weekend hiking plans',
+      from: { name: 'Marta Kowalczyk', email: 'marta.kowalczyk@gmail.com' },
+      snippet: 'One more thing — are we driving or coordinating with Piotr?',
+      bodyHtml: null,
+      bodyText: BODY_TEXT_MARTA_2,
     },
   ],
   [
@@ -835,6 +918,7 @@ export const DEV_MESSAGE_DETAILS = new Map([
     'dev-msg-5',
     {
       id: 'dev-msg-5',
+      threadId: 'thread-roadmap',
       subject: 'Q4 roadmap review — slides attached',
       from: { name: 'Piotr Nowak', email: 'p.nowak@acme.com' },
       snippet: "Please review the slides before tomorrow's meeting.",
@@ -859,6 +943,18 @@ export const DEV_MESSAGE_DETAILS = new Map([
     },
   ],
   [
+    'dev-msg-5b',
+    {
+      id: 'dev-msg-5b',
+      threadId: 'thread-roadmap',
+      subject: 'Re: Q4 roadmap review — slides attached',
+      from: { name: 'Piotr Nowak', email: 'p.nowak@acme.com' },
+      snippet: 'A few clarifications from this morning — go-live confirmed Nov 30.',
+      bodyHtml: null,
+      bodyText: BODY_TEXT_ROADMAP_REPLY,
+    },
+  ],
+  [
     'dev-msg-6',
     {
       id: 'dev-msg-6',
@@ -873,11 +969,24 @@ export const DEV_MESSAGE_DETAILS = new Map([
     'dev-msg-7',
     {
       id: 'dev-msg-7',
+      threadId: 'thread-auth-refactor',
       subject: 'Code review request: auth refactor',
       from: { name: 'Karolina Wiśniewska', email: 'k.wisniewska@acme.com' },
       snippet: "I've opened PR #42 for the auth module refactor.",
       bodyHtml: null,
       bodyText: BODY_TEXT_KAROLINA,
+    },
+  ],
+  [
+    'dev-msg-7b',
+    {
+      id: 'dev-msg-7b',
+      threadId: 'thread-auth-refactor',
+      subject: 'Re: Code review request: auth refactor',
+      from: { name: 'Karolina Wiśniewska', email: 'k.wisniewska@acme.com' },
+      snippet: "Quick update — I addressed Piotr's review comments. PR ready for final review.",
+      bodyHtml: null,
+      bodyText: BODY_TEXT_KAROLINA_FOLLOWUP,
     },
   ],
   // ── 20 extra personal-account messages ──────────────────────────────────
@@ -1129,8 +1238,10 @@ export const DEV_MESSAGE_DETAILS = new Map([
 const ACCOUNT_MESSAGES = {
   'dev-1': [
     'dev-msg-1',
+    'dev-msg-1b',
     'dev-msg-2',
     'dev-msg-3',
+    'dev-msg-3b',
     'dev-msg-4',
     'dev-p-01',
     'dev-p-02',
@@ -1153,7 +1264,7 @@ const ACCOUNT_MESSAGES = {
     'dev-p-19',
     'dev-p-20',
   ],
-  'dev-2': ['dev-msg-5', 'dev-msg-6', 'dev-msg-7'],
+  'dev-2': ['dev-msg-5', 'dev-msg-5b', 'dev-msg-6', 'dev-msg-7', 'dev-msg-7b'],
 };
 
 export function buildMessages() {
@@ -1167,6 +1278,10 @@ export function buildMessages() {
     'dev-msg-5': t - 15 * 60_000,
     'dev-msg-6': t - 45 * 60_000,
     'dev-msg-7': t - 3 * 3_600_000,
+    'dev-msg-1b': t - 1 * 60_000,
+    'dev-msg-3b': t - 30 * 60_000,
+    'dev-msg-5b': t - 10 * 60_000,
+    'dev-msg-7b': t - 90 * 60_000,
     'dev-p-01': t - 6 * 3_600_000,
     'dev-p-02': t - 18 * 3_600_000,
     'dev-p-03': t - 1 * 86_400_000,
