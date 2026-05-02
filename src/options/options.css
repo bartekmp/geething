@@ -431,6 +431,15 @@ input[type='checkbox'] {
   line-height: 1.5;
 }
 
+.setting-hint-error {
+  color: var(--danger);
+}
+
+.sound-actions {
+  display: inline-flex;
+  gap: 6px;
+}
+
 .shortcuts-note {
   margin: 0 0 12px;
 }

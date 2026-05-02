@@ -36,6 +36,41 @@
             <option value="title-snippet">Subject + preview</option>
           </select>
         </label>
+        <label class="row">
+          <span>Play sound on new mail</span>
+          <input id="notificationSoundEnabled" type="checkbox" />
+        </label>
+        <div id="sound-controls" hidden>
+          <label class="row">
+            <span>Volume: <output id="notificationSoundVolumeValue">70</output>%</span>
+            <input id="notificationSoundVolume" type="range" min="0" max="100" step="5" />
+          </label>
+          <label class="row">
+            <span>Sound</span>
+            <select id="notificationSoundType">
+              <option value="default">Default chime</option>
+              <option value="custom">Custom file</option>
+            </select>
+          </label>
+          <div id="custom-sound-row" class="row" hidden>
+            <span>Custom file <small id="custom-sound-meta" class="muted"></small></span>
+            <span class="sound-actions">
+              <input type="file" id="custom-sound-file" accept="audio/*" hidden />
+              <button id="custom-sound-upload" class="btn" type="button">Upload…</button>
+              <button id="custom-sound-remove" class="btn btn-danger" type="button" hidden>
+                Remove
+              </button>
+            </span>
+          </div>
+          <p id="custom-sound-hint" class="setting-hint" hidden>
+            Max 500 KB, 5 seconds. WAV, OGG, or MP3.
+          </p>
+          <p id="custom-sound-error" class="setting-hint setting-hint-error" hidden></p>
+          <div class="row">
+            <span>Test sound</span>
+            <button id="test-sound-btn" class="btn" type="button">Play test</button>
+          </div>
+        </div>
       </section>
 
       <section class="card">

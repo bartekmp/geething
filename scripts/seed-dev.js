@@ -22,10 +22,11 @@ const DEV_DIR = resolve(__dirname, '../.dev-src');
 // copied there), handles geething.getState/refresh/getMessageDetail, and
 // never touches the real Gmail API or OAuth.
 const DEV_SW = `// DEV ONLY — lives only in .dev-src/, never part of the production build
-import { getSeenMessages, getSettings, saveAccounts, savePersistedAccountState, saveSeenMessages } from '../shared/storage.js';
+import { clearCustomSound, getSeenMessages, getSettings, saveAccounts, saveCustomSound, savePersistedAccountState, saveSeenMessages } from '../shared/storage.js';
 import { ACCOUNTS, DEV_MESSAGE_DETAILS, buildMessages } from './dev-seed.js';
 import { updateBadge } from './badge.js';
 import { showGroupedMailNotification, showNewMailNotification } from './notifications.js';
+import { playNotificationSound } from './sound.js';
 
 const api = typeof browser !== 'undefined' ? browser : globalThis.chrome;
 const accountState = new Map();
@@ -137,6 +138,25 @@ async function handleMessage(msg) {
         const total = Array.from(accountState.values()).reduce((s, a) => s + a.unreadCount, 0);
         await updateBadge(total);
       }
+      return { ok: true };
+    }
+    case 'geething.testSound': {
+      const settings = await getSettings();
+      await playNotificationSound({ ...settings, notificationSoundEnabled: true });
+      return { ok: true };
+    }
+    case 'geething.uploadCustomSound': {
+      await saveCustomSound({
+        dataUrl: msg.dataUrl,
+        name: msg.name,
+        mimeType: msg.mimeType,
+        size: msg.size,
+        duration: msg.duration,
+      });
+      return { ok: true };
+    }
+    case 'geething.clearCustomSound': {
+      await clearCustomSound();
       return { ok: true };
     }
     default:
