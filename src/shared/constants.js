@@ -19,6 +19,7 @@ export const STORAGE_KEYS = Object.freeze({
   SEEN_MESSAGES: 'seenMessages',
   ACCOUNT_STATE: 'accountState',
   CUSTOM_SOUND: 'customSound',
+  PKCE_STATE: 'pkceState',
 });
 
 export const ALARM_NAMES = Object.freeze({

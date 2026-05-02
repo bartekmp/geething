@@ -89,6 +89,19 @@ export async function clearCustomSound() {
   await localArea().remove(STORAGE_KEYS.CUSTOM_SOUND);
 }
 
+export async function savePkceState(pkceState) {
+  await localArea().set({ [STORAGE_KEYS.PKCE_STATE]: pkceState });
+}
+
+export async function loadPkceState() {
+  const result = await localArea().get(STORAGE_KEYS.PKCE_STATE);
+  return result[STORAGE_KEYS.PKCE_STATE] || null;
+}
+
+export async function clearPkceState() {
+  await localArea().remove(STORAGE_KEYS.PKCE_STATE);
+}
+
 export async function clearAccountData(accountId) {
   await deleteTokens(accountId);
   const result = await localArea().get(STORAGE_KEYS.SEEN_MESSAGES);

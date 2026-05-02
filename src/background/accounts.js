@@ -70,15 +70,16 @@ export async function removeAccount(accountId) {
     return false;
   }
   const tokens = await getTokens(accountId);
+  let revokeOk = true;
   if (tokens?.refreshToken) {
-    await revokeToken(tokens.refreshToken);
+    revokeOk = await revokeToken(tokens.refreshToken);
   } else if (tokens?.accessToken) {
-    await revokeToken(tokens.accessToken);
+    revokeOk = await revokeToken(tokens.accessToken);
   }
   const remaining = accounts.filter((a) => a.id !== accountId);
   await saveAccounts(remaining);
   await clearAccountData(accountId);
-  return true;
+  return { ok: true, revokeOk };
 }
 
 export async function updateAccount(accountId, patch) {

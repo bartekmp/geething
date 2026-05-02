@@ -7,6 +7,7 @@ import {
   TOKEN_ENDPOINT,
   USERINFO_ENDPOINT,
 } from '../shared/constants.js';
+import { clearPkceState, loadPkceState, savePkceState } from '../shared/storage.js';
 
 const api = typeof browser !== 'undefined' ? browser : globalThis.chrome;
 
@@ -175,16 +176,20 @@ export async function refreshAccessToken({ refreshToken, clientId, clientSecret 
 
 export async function revokeToken(token) {
   if (!token) {
-    return;
+    return true;
   }
   const body = new URLSearchParams({ token });
-  await fetch(REVOKE_ENDPOINT, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-    body: body.toString(),
-  }).catch(() => {
-    // Best-effort revocation — offline or already revoked are non-fatal.
-  });
+  try {
+    const response = await fetch(REVOKE_ENDPOINT, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: body.toString(),
+    });
+    return response.ok;
+  } catch {
+    // Network failure — token may still be valid on Google's side.
+    return false;
+  }
 }
 
 export async function fetchUserInfo(accessToken) {
@@ -221,18 +226,35 @@ export async function launchOAuth({
   const { verifier, challenge } = await generatePkcePair();
   const state = randomString(32);
   const redirectUri = getRedirectUri();
-  const authUrl = buildAuthUrl({
-    clientId,
-    redirectUri,
-    codeChallenge: challenge,
-    state,
-    loginHint,
-  });
 
-  const redirectUrl = await launchAuthWindow(authUrl, redirectUri);
+  // Persist verifier and state so a service-worker restart mid-flow can still
+  // verify the redirect and complete the token exchange.
+  await savePkceState({ verifier, state });
+
+  let redirectUrl;
+  try {
+    const authUrl = buildAuthUrl({
+      clientId,
+      redirectUri,
+      codeChallenge: challenge,
+      state,
+      loginHint,
+    });
+    redirectUrl = await launchAuthWindow(authUrl, redirectUri);
+  } catch (err) {
+    await clearPkceState();
+    throw err;
+  }
+
+  // After a worker restart the in-memory verifier/state would be lost, so
+  // always read back from storage as the authoritative source.
+  const persisted = await loadPkceState();
+  const resolvedVerifier = persisted?.verifier ?? verifier;
+  const resolvedState = persisted?.state ?? state;
+  await clearPkceState();
 
   const { code, state: returnedState } = extractAuthResult(redirectUrl);
-  if (returnedState !== state) {
+  if (returnedState !== resolvedState) {
     throw new Error('OAuth state mismatch — possible CSRF.');
   }
   if (!code) {
@@ -241,7 +263,7 @@ export async function launchOAuth({
 
   const tokens = await exchangeCodeForTokens({
     code,
-    codeVerifier: verifier,
+    codeVerifier: resolvedVerifier,
     redirectUri,
     clientId,
     clientSecret,

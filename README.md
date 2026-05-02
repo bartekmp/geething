@@ -20,6 +20,7 @@ A browser extension for multi-account Gmail™ notifications. Get a badge counte
 - **Quick actions** — mark as read, archive, move to spam, delete, reply, or open in Gmail™, all without leaving the extension
 - **Notification sounds** — optional audio alert on new mail; choose the built-in sound or upload your own (WAV/MP3/OGG, max 500 KB / 5 s) with adjustable volume
 - **Themes** — light, dark, or auto (follows system preference)
+- **Privacy controls** — optionally block external images in email previews (including tracking pixels); disabled by default so images load normally
 - **Configurable** — poll interval (1–30 min), max messages per page (5–50), popup size, keyboard shortcuts, and more
 - **Limits** — up to 100 unread messages are fetched per inbox per poll; emails larger than 5 MB cannot be previewed inline (open in Gmail™ instead)
 
