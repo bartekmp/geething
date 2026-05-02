@@ -17,6 +17,12 @@ const ICONS = Object.freeze({
   star: 'M22 9.24l-7.19-.62L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21 12 17.27 18.18 21l-1.63-7.03L22 9.24zm-10 6.91l-3.76 2.27 1-4.28-3.32-2.88 4.38-.38L12 6.1l1.71 4.28 4.38.38-3.32 2.88 1 4.28L12 16.15z',
   starFilled:
     'M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z',
+  paperclip:
+    'M16.5 6v11.5c0 2.21-1.79 4-4 4s-4-1.79-4-4V5a2.5 2.5 0 0 1 5 0v10.5c0 .55-.45 1-1 1s-1-.45-1-1V6H10v9.5a2.5 2.5 0 0 0 5 0V5c0-2.21-1.79-4-4-4S7 2.79 7 5v12.5c0 3.04 2.46 5.5 5.5 5.5s5.5-2.46 5.5-5.5V6h-1.5z',
+  fileGeneric:
+    'M14 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z',
+  fileImage:
+    'M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z',
 });
 
 const els = {
@@ -229,6 +235,56 @@ function formatRelativeTime(msEpoch) {
   return new Date(msEpoch).toLocaleDateString();
 }
 
+function formatFileSize(bytes) {
+  if (bytes >= 1024 * 1024) {
+    return `${(bytes / 1024 / 1024).toFixed(1)}M`;
+  }
+  if (bytes >= 1024) {
+    return `${Math.round(bytes / 1024)}K`;
+  }
+  return `${bytes} B`;
+}
+
+function getFileIconKey(mimeType) {
+  if (mimeType?.startsWith('image/')) {
+    return 'fileImage';
+  }
+  return 'fileGeneric';
+}
+
+async function downloadAttachment(accountId, messageId, attachment) {
+  let base64Data;
+  if (attachment.inlineData) {
+    base64Data = attachment.inlineData;
+  } else if (attachment.attachmentId) {
+    const result = await sendMessage({
+      type: 'geething.getAttachment',
+      accountId,
+      messageId,
+      attachmentId: attachment.attachmentId,
+    });
+    base64Data = result.data;
+  } else {
+    return;
+  }
+  const normalized = base64Data.replace(/-/g, '+').replace(/_/g, '/');
+  const padded = normalized + '==='.slice((normalized.length + 3) % 4);
+  const binary = atob(padded);
+  const bytes = new Uint8Array(binary.length);
+  for (let i = 0; i < binary.length; i++) {
+    bytes[i] = binary.charCodeAt(i);
+  }
+  const blob = new Blob([bytes], { type: attachment.mimeType || 'application/octet-stream' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = attachment.filename || 'attachment';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+
 // ── Render ─────────────────────────────────────────────────────────────────
 function updateGmailBtn() {
   const account = getActiveAccount();
@@ -390,7 +446,22 @@ function renderEmailItem(account, message) {
   const time = document.createElement('span');
   time.className = 'email-time';
   time.textContent = formatRelativeTime(message.internalDate);
-  row.append(sender, time);
+  const rowRight = document.createElement('span');
+  rowRight.className = 'email-row-right';
+  rowRight.appendChild(time);
+  if (message.attachments?.length > 0) {
+    const pill = document.createElement('span');
+    pill.className = 'email-attachment-hint';
+    pill.title = `${message.attachments.length} attachment${message.attachments.length > 1 ? 's' : ''}`;
+    pill.appendChild(makeSvgIcon(ICONS.paperclip, 11));
+    if (message.attachments.length > 1) {
+      const count = document.createElement('span');
+      count.textContent = message.attachments.length;
+      pill.appendChild(count);
+    }
+    rowRight.appendChild(pill);
+  }
+  row.append(sender, rowRight);
 
   const subject = document.createElement('div');
   subject.className = 'email-subject';
@@ -402,10 +473,12 @@ function renderEmailItem(account, message) {
 
   const actions = document.createElement('div');
   actions.className = 'email-actions';
+  const markReadBtn = makeMarkReadToggleBtn(account.id, message.id, dimmedMessages.has(message.id));
+  li.setRead = (val) => markReadBtn.setRead(val);
   actions.append(
     makeIconBtn('reply', 'Reply', () => openReply(account, message)),
     makeStarBtn(account.id, message.id, (message.labelIds || []).includes('STARRED')),
-    makeMarkReadToggleBtn(account.id, message.id, dimmedMessages.has(message.id)),
+    markReadBtn,
     makeIconBtn('archive', 'Archive', () => performAction(account.id, message.id, 'archive')),
     makeIconBtn('spam', 'Spam', () => performAction(account.id, message.id, 'spam'), {
       danger: true,
@@ -451,11 +524,15 @@ async function performAction(accountId, messageId, action) {
     await sendMessage({ type: 'geething.action', accountId, messageId, action });
     if (action === 'markRead' && state.settings?.markReadBehavior === 'dim') {
       dimmedMessages.add(messageId);
-      els.list.querySelector(`[data-message-id="${messageId}"]`)?.classList.add('read-dimmed');
+      const li = els.list.querySelector(`[data-message-id="${messageId}"]`);
+      li?.classList.add('read-dimmed');
+      li?.setRead?.(true);
       document.activeElement?.blur();
     } else if (action === 'markUnread' && dimmedMessages.has(messageId)) {
       dimmedMessages.delete(messageId);
-      els.list.querySelector(`[data-message-id="${messageId}"]`)?.classList.remove('read-dimmed');
+      const li = els.list.querySelector(`[data-message-id="${messageId}"]`);
+      li?.classList.remove('read-dimmed');
+      li?.setRead?.(false);
       document.activeElement?.blur();
     } else {
       await refresh({ silent: true });
@@ -512,6 +589,48 @@ function makeEmailIframe(srcdoc) {
 }
 
 // ── Detail rendering ───────────────────────────────────────────────────────
+
+function renderAttachmentList(accountId, messageId, attachments) {
+  const section = document.createElement('div');
+  section.className = 'attachment-list';
+  for (const att of attachments) {
+    const item = document.createElement('button');
+    item.type = 'button';
+    item.className = 'attachment-item';
+    item.title = `Download ${att.filename}`;
+
+    const icon = makeSvgIcon(ICONS[getFileIconKey(att.mimeType)], 16);
+    icon.setAttribute('class', 'attachment-icon');
+
+    const info = document.createElement('span');
+    info.className = 'attachment-info';
+
+    const name = document.createElement('span');
+    name.className = 'attachment-name';
+    name.textContent = att.filename;
+
+    const size = document.createElement('span');
+    size.className = 'attachment-size';
+    size.textContent = att.size ? formatFileSize(att.size) : '';
+
+    info.append(name, size);
+    item.append(icon, info);
+
+    item.addEventListener('click', async () => {
+      item.disabled = true;
+      try {
+        await downloadAttachment(accountId, messageId, att);
+      } catch (err) {
+        showError(err.message || String(err));
+      } finally {
+        item.disabled = false;
+      }
+    });
+
+    section.appendChild(item);
+  }
+  return section;
+}
 
 function renderDetail(account, detail) {
   clearNode(els.detailContent);
@@ -614,7 +733,12 @@ function renderDetail(account, detail) {
       })
     : '';
 
-  els.detailContent.append(subject, from, date, body);
+  const nodes = [subject, from, date];
+  if (detail.attachments?.length > 0) {
+    nodes.push(renderAttachmentList(account.id, detail.id, detail.attachments));
+  }
+  nodes.push(body);
+  els.detailContent.append(...nodes);
 }
 
 els.backBtn.addEventListener('click', () => {

@@ -773,6 +773,16 @@ We look forward to seeing you.
 Kind regards,
 Medicover Patient Services`;
 
+// ── Dev attachment helpers ─────────────────────────────────────────────────
+// Encodes a short text label into base64url so dev attachments are actually
+// downloadable (the file contains the label text — good enough for UI testing).
+function devAttachData(label) {
+  return btoa(`[Geething dev seed - ${label}]`)
+    .replace(/\+/g, '-')
+    .replace(/\//g, '_')
+    .replace(/=+$/, '');
+}
+
 // ── Message map ────────────────────────────────────────────────────────────
 
 // Flat map of messageId → full detail object (including bodies).
@@ -830,6 +840,22 @@ export const DEV_MESSAGE_DETAILS = new Map([
       snippet: "Please review the slides before tomorrow's meeting.",
       bodyHtml: BODY_HTML_ROADMAP,
       bodyText: null,
+      attachments: [
+        {
+          filename: 'Q4_Roadmap_Review.pdf',
+          mimeType: 'application/pdf',
+          size: 2_451_208,
+          attachmentId: null,
+          inlineData: devAttachData('Q4 Roadmap Review'),
+        },
+        {
+          filename: 'initiative_tracker.xlsx',
+          mimeType: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+          size: 93_440,
+          attachmentId: null,
+          inlineData: devAttachData('initiative tracker'),
+        },
+      ],
     },
   ],
   [
@@ -876,6 +902,15 @@ export const DEV_MESSAGE_DETAILS = new Map([
       snippet: 'Your account statement for October 2024 is ready. Closing balance: 14 816,15 PLN.',
       bodyHtml: BODY_HTML_BANK,
       bodyText: null,
+      attachments: [
+        {
+          filename: 'wyciag_pazdziernik_2024.pdf',
+          mimeType: 'application/pdf',
+          size: 159_744,
+          attachmentId: null,
+          inlineData: devAttachData('PKO account statement October 2024'),
+        },
+      ],
     },
   ],
   [
@@ -920,6 +955,15 @@ export const DEV_MESSAGE_DETAILS = new Map([
       snippet: 'Cześć Ala, przesyłam Ci obiecany przepis na pierogi takie jak robiła prababcia.',
       bodyHtml: null,
       bodyText: BODY_TEXT_GRANDMA,
+      attachments: [
+        {
+          filename: 'przepis_babci_haliny.jpg',
+          mimeType: 'image/jpeg',
+          size: 487_312,
+          attachmentId: null,
+          inlineData: devAttachData('babcia Halina recipe scan'),
+        },
+      ],
     },
   ],
   [

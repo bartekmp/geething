@@ -249,6 +249,25 @@ body {
   text-overflow: ellipsis;
 }
 
+.email-row-right {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+.email-attachment-hint {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  padding: 1px 5px 1px 4px;
+  border-radius: 10px;
+  background: var(--bg-hover);
+  color: var(--text-secondary);
+  font-size: 11px;
+  flex-shrink: 0;
+}
+
 /* ── Action icon buttons ────────────────────────────── */
 .email-actions {
   display: flex;
@@ -510,6 +529,67 @@ body {
     color: var(--accent);
     opacity: 1;
   }
+}
+
+.attachment-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-bottom: 14px;
+}
+
+.attachment-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 10px;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+  cursor: pointer;
+  text-align: left;
+  font-size: 13px;
+  transition:
+    background 0.12s ease,
+    border-color 0.12s ease;
+}
+
+.attachment-item:hover {
+  background: var(--bg-hover);
+  border-color: var(--accent);
+}
+
+.attachment-item:disabled {
+  opacity: 0.5;
+  cursor: wait;
+}
+
+.attachment-icon {
+  color: var(--text-secondary);
+  flex-shrink: 0;
+}
+
+.attachment-info {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  min-width: 0;
+  flex: 1;
+}
+
+.attachment-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  flex: 1;
+  min-width: 0;
+}
+
+.attachment-size {
+  font-size: 11px;
+  color: var(--text-muted);
+  flex-shrink: 0;
 }
 
 .detail-body {

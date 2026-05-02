@@ -60,12 +60,13 @@ export async function fetchUnreadMessageIds(
 
 export async function fetchMessageMetadata(accessToken, messageId) {
   const data = await gmailFetch(accessToken, `/users/me/messages/${messageId}`, {
-    query: {
-      format: 'metadata',
-      metadataHeaders: ['From', 'Subject', 'Date'],
-    },
+    query: { format: 'full' },
   });
   return parseMessage(data);
+}
+
+export async function fetchAttachment(accessToken, messageId, attachmentId) {
+  return gmailFetch(accessToken, `/users/me/messages/${messageId}/attachments/${attachmentId}`);
 }
 
 export async function fetchMessageDetail(accessToken, messageId) {
@@ -182,6 +183,7 @@ export function parseMessage(raw, { includeBody = false } = {}) {
     from: parseAddress(headers.from),
     subject: headers.subject || '(no subject)',
     date: headers.date || null,
+    attachments: extractAttachments(raw.payload, { includeInlineData: includeBody }),
   };
   if (includeBody) {
     const { html, text } = extractBody(raw.payload);
@@ -243,6 +245,33 @@ export function extractBody(payload) {
     }
   }
   return out;
+}
+
+export function extractAttachments(payload, { includeInlineData = false } = {}) {
+  const attachments = [];
+  if (!payload) {
+    return attachments;
+  }
+  const stack = [payload];
+  while (stack.length) {
+    const part = stack.shift();
+    if (part.parts?.length) {
+      stack.push(...part.parts);
+      continue;
+    }
+    if (!part.filename?.trim()) {
+      continue;
+    }
+    const att = {
+      filename: part.filename,
+      mimeType: part.mimeType || 'application/octet-stream',
+      size: part.body?.size ?? 0,
+      attachmentId: part.body?.attachmentId ?? null,
+      inlineData: includeInlineData ? (part.body?.data ?? null) : null,
+    };
+    attachments.push(att);
+  }
+  return attachments;
 }
 
 function decodeBase64Url(str) {
