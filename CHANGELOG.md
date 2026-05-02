@@ -3,6 +3,14 @@
 All notable changes to Geething are documented here.
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/). Versioning follows [Semantic Versioning](https://semver.org/).
 
+## [0.7.0](https://github.com/bartekmp/geething/compare/geething-v0.6.0...geething-v0.7.0) (2026-05-02)
+
+
+### Features
+
+* attachment support ([#38](https://github.com/bartekmp/geething/issues/38)) ([938a4b7](https://github.com/bartekmp/geething/commit/938a4b7b614c525553b9530e9f9261332b914a65))
+* notification sounds ([#40](https://github.com/bartekmp/geething/issues/40)) ([5009bff](https://github.com/bartekmp/geething/commit/5009bff0dc91302e2805e6ab806ba6884bf5717b))
+
 ## [0.6.0](https://github.com/bartekmp/geething/compare/geething-v0.5.0...geething-v0.6.0) (2026-04-30)
 
 
