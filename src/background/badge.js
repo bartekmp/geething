@@ -30,3 +30,17 @@ export async function updateBadge(totalUnread, { color = '#d93025' } = {}) {
 export async function clearBadge() {
   await updateBadge(0);
 }
+
+export async function showAuthErrorBadge() {
+  try {
+    await api.action.setBadgeText({ text: '!' });
+    if (api.action.setBadgeBackgroundColor) {
+      await api.action.setBadgeBackgroundColor({ color: '#e37400' });
+    }
+    if (api.action.setBadgeTextColor) {
+      await api.action.setBadgeTextColor({ color: '#ffffff' });
+    }
+  } catch (err) {
+    console.warn('Failed to set auth error badge:', err);
+  }
+}

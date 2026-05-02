@@ -20,7 +20,7 @@ import {
   reorderAccounts,
   updateAccount,
 } from './accounts.js';
-import { clearBadge, updateBadge } from './badge.js';
+import { clearBadge, showAuthErrorBadge, updateBadge } from './badge.js';
 import {
   registerNotificationButtonHandler,
   registerNotificationClickHandler,
@@ -59,6 +59,21 @@ function setAccountState(accountId, patch) {
   const next = { ...prev, ...patch };
   accountState.set(accountId, next);
   return next;
+}
+
+// Updates the badge to the total unread count, or to '!' (amber) if any
+// account needs re-authorization and there are no unread messages.
+async function updateBadgeOrWarn(total) {
+  if (total > 0) {
+    await updateBadge(total);
+    return;
+  }
+  const needsReauth = Array.from(accountState.values()).some((s) => s.needsReauth);
+  if (needsReauth) {
+    await showAuthErrorBadge();
+  } else {
+    await clearBadge();
+  }
 }
 
 async function pollAccount(account, { isInitial = false } = {}) {
@@ -146,11 +161,7 @@ async function pollAllAccounts({ isInitial = false } = {}) {
         accountState.delete(id);
       }
     }
-    if (total > 0) {
-      await updateBadge(total);
-    } else {
-      await clearBadge();
-    }
+    await updateBadgeOrWarn(total);
     // Persist so the popup sees correct state immediately after SW restart.
     await savePersistedAccountState(Object.fromEntries(accountState));
     return total;
@@ -213,10 +224,16 @@ async function handleMessage(msg, _sender) {
       return { account: acc };
     }
     case 'geething.removeAccount': {
-      const ok = await removeAccount(msg.accountId);
+      const { ok, revokeOk } = await removeAccount(msg.accountId);
       accountState.delete(msg.accountId);
       await pollAllAccounts();
-      return { ok };
+      return {
+        ok,
+        revokeWarning:
+          revokeOk === false
+            ? 'Token revocation failed — you may want to revoke access manually from your Google Account security settings.'
+            : null,
+      };
     }
     case 'geething.updateAccount': {
       const acc = await updateAccount(msg.accountId, msg.patch || {});
@@ -276,11 +293,7 @@ async function handleMessage(msg, _sender) {
         (sum, s) => sum + (s.unreadCount || 0),
         0,
       );
-      if (total > 0) {
-        await updateBadge(total);
-      } else {
-        await clearBadge();
-      }
+      await updateBadgeOrWarn(total);
       return { ok: true };
     }
     case 'geething.getLabels': {
@@ -382,7 +395,7 @@ async function performAction({ accountId, messageId, action }) {
         (sum, s) => sum + (s.unreadCount || 0),
         0,
       );
-      await updateBadge(total);
+      await updateBadgeOrWarn(total);
     }
   }
   return { ok: true };
@@ -439,11 +452,7 @@ function attachListeners() {
       (sum, s) => sum + (s.unreadCount || 0),
       0,
     );
-    if (total > 0) {
-      await updateBadge(total);
-    } else {
-      await clearBadge();
-    }
+    await updateBadgeOrWarn(total);
   });
 
   if (api.storage?.onChanged) {

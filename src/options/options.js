@@ -367,8 +367,11 @@ async function renderAccountRow(account) {
     }
     removeBtn.disabled = true;
     try {
-      await sendMessage({ type: 'geething.removeAccount', accountId: account.id });
+      const result = await sendMessage({ type: 'geething.removeAccount', accountId: account.id });
       await loadState();
+      if (result?.revokeWarning) {
+        showStatus(result.revokeWarning);
+      }
     } catch (err) {
       showStatus(err.message || String(err));
       removeBtn.disabled = false;

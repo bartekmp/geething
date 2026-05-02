@@ -55,6 +55,7 @@ vi.mock('../../src/background/sound.js', () => ({
 vi.mock('../../src/background/badge.js', () => ({
   updateBadge: vi.fn(),
   clearBadge: vi.fn(),
+  showAuthErrorBadge: vi.fn(),
 }));
 
 vi.mock('../../src/shared/storage.js', () => ({
@@ -65,6 +66,9 @@ vi.mock('../../src/shared/storage.js', () => ({
   getSettings: vi.fn().mockResolvedValue({ notificationsEnabled: true, pollIntervalMinutes: 2 }),
   saveCustomSound: vi.fn(),
   clearCustomSound: vi.fn(),
+  savePkceState: vi.fn(),
+  loadPkceState: vi.fn().mockResolvedValue(null),
+  clearPkceState: vi.fn(),
 }));
 
 import {
@@ -94,7 +98,7 @@ import {
   showGroupedMailNotification,
 } from '../../src/background/notifications.js';
 import { playNotificationSound } from '../../src/background/sound.js';
-import { updateBadge, clearBadge } from '../../src/background/badge.js';
+import { updateBadge, clearBadge, showAuthErrorBadge } from '../../src/background/badge.js';
 import {
   getPersistedAccountState,
   savePersistedAccountState,
@@ -148,7 +152,7 @@ beforeEach(() => {
   getAccounts.mockResolvedValue([]);
   getAccountById.mockResolvedValue(null);
   getValidAccessToken.mockResolvedValue('mock-token');
-  removeAccount.mockResolvedValue(true);
+  removeAccount.mockResolvedValue({ ok: true, revokeOk: true });
   updateAccount.mockResolvedValue(ACCOUNT_A);
   reorderAccounts.mockResolvedValue([]);
   fetchLabels.mockResolvedValue([]);
@@ -172,6 +176,7 @@ beforeEach(() => {
   playNotificationSound.mockReturnValue(undefined);
   updateBadge.mockResolvedValue(undefined);
   clearBadge.mockResolvedValue(undefined);
+  showAuthErrorBadge.mockResolvedValue(undefined);
 });
 
 // ── pollAllAccounts ───────────────────────────────────────────────────────────
@@ -183,6 +188,18 @@ describe('pollAllAccounts', () => {
     expect(total).toBe(0);
     expect(clearBadge).toHaveBeenCalled();
     expect(savePersistedAccountState).toHaveBeenCalled();
+  });
+
+  it('shows amber ! badge when an account needs re-auth and total unread is 0', async () => {
+    getAccounts.mockResolvedValue([ACCOUNT_A]);
+    fetchUnreadMessageIds.mockResolvedValue([]);
+    // Simulate a prior poll having set needsReauth.
+    accountState.set('acc-a', { needsReauth: true, unreadCount: 0, messages: [] });
+
+    await pollAllAccounts({ isInitial: true });
+
+    expect(showAuthErrorBadge).toHaveBeenCalled();
+    expect(clearBadge).not.toHaveBeenCalled();
   });
 
   it('returns total unread count across all accounts and updates badge', async () => {

@@ -5,7 +5,7 @@ vi.mock('../../src/background/auth.js', () => {
   return {
     launchOAuth: vi.fn(),
     refreshAccessToken: vi.fn(),
-    revokeToken: vi.fn(async () => {}),
+    revokeToken: vi.fn(async () => true),
   };
 });
 
@@ -63,8 +63,9 @@ describe('accounts', () => {
       userInfo: { email: 'c@example.com' },
     });
     const acc = await addAccount();
-    const ok = await removeAccount(acc.id);
-    expect(ok).toBe(true);
+    const result = await removeAccount(acc.id);
+    expect(result.ok).toBe(true);
+    expect(result.revokeOk).toBe(true);
     expect(authMod.revokeToken).toHaveBeenCalledWith('rr');
     expect(await getAccounts()).toHaveLength(0);
     expect(await getTokens(acc.id)).toBeNull();
