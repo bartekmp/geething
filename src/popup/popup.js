@@ -470,10 +470,12 @@ function renderEmailItem(account, message) {
 
   const actions = document.createElement('div');
   actions.className = 'email-actions';
+  const markReadBtn = makeMarkReadToggleBtn(account.id, message.id, dimmedMessages.has(message.id));
+  li.setRead = (val) => markReadBtn.setRead(val);
   actions.append(
     makeIconBtn('reply', 'Reply', () => openReply(account, message)),
     makeStarBtn(account.id, message.id, (message.labelIds || []).includes('STARRED')),
-    makeMarkReadToggleBtn(account.id, message.id, dimmedMessages.has(message.id)),
+    markReadBtn,
     makeIconBtn('archive', 'Archive', () => performAction(account.id, message.id, 'archive')),
     makeIconBtn('spam', 'Spam', () => performAction(account.id, message.id, 'spam'), {
       danger: true,
@@ -519,11 +521,15 @@ async function performAction(accountId, messageId, action) {
     await sendMessage({ type: 'geething.action', accountId, messageId, action });
     if (action === 'markRead' && state.settings?.markReadBehavior === 'dim') {
       dimmedMessages.add(messageId);
-      els.list.querySelector(`[data-message-id="${messageId}"]`)?.classList.add('read-dimmed');
+      const li = els.list.querySelector(`[data-message-id="${messageId}"]`);
+      li?.classList.add('read-dimmed');
+      li?.setRead?.(true);
       document.activeElement?.blur();
     } else if (action === 'markUnread' && dimmedMessages.has(messageId)) {
       dimmedMessages.delete(messageId);
-      els.list.querySelector(`[data-message-id="${messageId}"]`)?.classList.remove('read-dimmed');
+      const li = els.list.querySelector(`[data-message-id="${messageId}"]`);
+      li?.classList.remove('read-dimmed');
+      li?.setRead?.(false);
       document.activeElement?.blur();
     } else {
       await refresh({ silent: true });
