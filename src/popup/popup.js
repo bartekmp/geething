@@ -718,10 +718,22 @@ function renderDetail(account, detail) {
   const body = document.createElement('div');
   body.className = 'detail-body';
   if (detail.bodyHtml) {
-    body.appendChild(makeEmailIframe(processEmailHtml(detail.bodyHtml)));
+    body.appendChild(
+      makeEmailIframe(
+        processEmailHtml(detail.bodyHtml, {
+          blockExternalImages: !!state.settings?.blockExternalImages,
+        }),
+      ),
+    );
   } else {
     const rawText = detail.bodyText || detail.snippet || '';
-    body.appendChild(makeEmailIframe(buildPlainTextDoc(formatPlainTextEmail(rawText))));
+    body.appendChild(
+      makeEmailIframe(
+        buildPlainTextDoc(formatPlainTextEmail(rawText), {
+          blockExternalImages: !!state.settings?.blockExternalImages,
+        }),
+      ),
+    );
   }
 
   const date = document.createElement('div');

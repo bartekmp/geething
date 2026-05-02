@@ -81,8 +81,14 @@ export function formatPlainTextEmail(text) {
   return out.join('');
 }
 
-export function buildPlainTextDoc(formattedHtml) {
-  return `<!doctype html><html><head><meta charset="utf-8"><style>
+const EMAIL_CSP_OPEN =
+  "default-src 'none'; style-src 'unsafe-inline'; img-src https: data: cid:; font-src data:;";
+const EMAIL_CSP_STRICT =
+  "default-src 'none'; style-src 'unsafe-inline'; img-src data: cid:; font-src data:;";
+
+export function buildPlainTextDoc(formattedHtml, { blockExternalImages = false } = {}) {
+  const csp = blockExternalImages ? EMAIL_CSP_STRICT : EMAIL_CSP_OPEN;
+  return `<!doctype html><html><head><meta charset="utf-8"><meta http-equiv="Content-Security-Policy" content="${csp}"><style>
 body{font-family:system-ui,sans-serif;font-size:14px;color:#202124;margin:16px;line-height:1.6;word-break:break-word}
 a{color:#1a73e8}h1,h2,h3{margin:12px 0 4px}
 code{background:#f5f5f5;padding:2px 4px;border-radius:3px;font-family:monospace;font-size:13px}
@@ -91,12 +97,19 @@ p{margin:4px 0}
 </style></head><body>${formattedHtml}</body></html>`;
 }
 
-// Adds target="_blank" / rel="noopener noreferrer" to all links in an HTML email string.
-export function processEmailHtml(html) {
+// Sanitises an HTML email for display in the srcdoc iframe:
+// • Rewrites all links to open in a new tab.
+// • Injects a CSP that blocks scripts, external fonts, and (optionally) external images.
+export function processEmailHtml(html, { blockExternalImages = false } = {}) {
   const doc = new DOMParser().parseFromString(html, 'text/html');
   doc.querySelectorAll('a[href]').forEach((a) => {
     a.setAttribute('target', '_blank');
     a.setAttribute('rel', 'noopener noreferrer');
   });
+  const cspContent = blockExternalImages ? EMAIL_CSP_STRICT : EMAIL_CSP_OPEN;
+  const csp = doc.createElement('meta');
+  csp.setAttribute('http-equiv', 'Content-Security-Policy');
+  csp.setAttribute('content', cspContent);
+  doc.head.insertBefore(csp, doc.head.firstChild);
   return `<!doctype html>${doc.documentElement.outerHTML}`;
 }
