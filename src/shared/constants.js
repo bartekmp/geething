@@ -28,6 +28,7 @@ export const ALARM_NAMES = Object.freeze({
 export const DEFAULT_SETTINGS = Object.freeze({
   pollIntervalMinutes: 2,
   notificationsEnabled: true,
+  blockExternalImages: false,
   notificationContentMode: 'title-snippet', // 'title' | 'title-snippet'
   notificationSoundEnabled: false,
   notificationSoundType: 'default', // 'default' | 'custom'

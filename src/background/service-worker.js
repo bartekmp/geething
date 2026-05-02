@@ -48,7 +48,11 @@ const api = typeof browser !== 'undefined' ? browser : globalThis.chrome;
 const accountState = new Map();
 
 // Guard against concurrent polls that would cause duplicate notifications.
+// A safety timer releases the lock if a poll hangs beyond POLL_GUARD_TIMEOUT_MS
+// so a single stuck fetch cannot freeze the extension indefinitely.
+const POLL_GUARD_TIMEOUT_MS = 5 * 60 * 1000;
 let pollRunning = false;
+let pollGuardTimer = null;
 
 function setAccountState(accountId, patch) {
   const prev = accountState.get(accountId) || {};
@@ -123,6 +127,11 @@ async function pollAllAccounts({ isInitial = false } = {}) {
     return 0;
   }
   pollRunning = true;
+  pollGuardTimer = setTimeout(() => {
+    console.warn('Poll guard timeout — releasing lock after', POLL_GUARD_TIMEOUT_MS / 1000, 's');
+    pollRunning = false;
+    pollGuardTimer = null;
+  }, POLL_GUARD_TIMEOUT_MS);
   try {
     const accounts = await getAccounts();
     let total = 0;
@@ -146,6 +155,8 @@ async function pollAllAccounts({ isInitial = false } = {}) {
     await savePersistedAccountState(Object.fromEntries(accountState));
     return total;
   } finally {
+    clearTimeout(pollGuardTimer);
+    pollGuardTimer = null;
     pollRunning = false;
   }
 }
@@ -223,6 +234,16 @@ async function handleMessage(msg, _sender) {
       if (!account) {
         throw new Error('Account not found');
       }
+      // Validate message belongs to this account when state is available.
+      // Skipped when state hasn't loaded yet (empty messages list) to avoid
+      // blocking legitimate requests on first boot.
+      const acctStateDetail = accountState.get(msg.accountId);
+      if (
+        acctStateDetail?.messages?.length > 0 &&
+        !acctStateDetail.messages.some((m) => m.id === msg.messageId)
+      ) {
+        throw new Error('Message not found for this account');
+      }
       const token = await getValidAccessToken(msg.accountId);
       return fetchMessageDetail(token, msg.messageId);
     }
@@ -230,6 +251,14 @@ async function handleMessage(msg, _sender) {
       const account = await getAccountById(msg.accountId);
       if (!account) {
         throw new Error('Account not found');
+      }
+      // Same ownership check as getMessageDetail.
+      const acctStateAtt = accountState.get(msg.accountId);
+      if (
+        acctStateAtt?.messages?.length > 0 &&
+        !acctStateAtt.messages.some((m) => m.id === msg.messageId)
+      ) {
+        throw new Error('Message not found for this account');
       }
       const token = await getValidAccessToken(msg.accountId);
       return fetchAttachment(token, msg.messageId, msg.attachmentId);
@@ -427,6 +456,11 @@ function attachListeners() {
 }
 
 attachListeners();
+
+// Exported only for unit tests — not part of the public API.
+export function __testing__() {
+  return { handleMessage, performAction, pollAllAccounts, pollAccount, accountState };
+}
 
 // Kick off an initial poll shortly after worker boot.
 (async () => {

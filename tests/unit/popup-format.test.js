@@ -1,5 +1,9 @@
 import { describe, expect, it } from 'vitest';
-import { formatPlainTextEmail } from '../../src/popup/email-format.js';
+import {
+  buildPlainTextDoc,
+  formatPlainTextEmail,
+  processEmailHtml,
+} from '../../src/popup/email-format.js';
 
 describe('formatPlainTextEmail / links', () => {
   it('wraps bare URLs in anchor tags', () => {
@@ -72,5 +76,70 @@ describe('formatPlainTextEmail / HTML escaping', () => {
 describe('formatPlainTextEmail / blank lines', () => {
   it('turns blank lines into <br>', () => {
     expect(formatPlainTextEmail('A\n\nB')).toContain('<br>');
+  });
+});
+
+describe('processEmailHtml / CSP', () => {
+  it('injects a Content-Security-Policy meta tag', () => {
+    const result = processEmailHtml('<html><head></head><body><p>hi</p></body></html>');
+    expect(result).toContain('Content-Security-Policy');
+  });
+
+  it('allows external images by default', () => {
+    const result = processEmailHtml('<html><head></head><body></body></html>');
+    expect(result).toContain('img-src https:');
+  });
+
+  it('blocks external images when blockExternalImages is true', () => {
+    const result = processEmailHtml('<html><head></head><body></body></html>', {
+      blockExternalImages: true,
+    });
+    expect(result).not.toContain('img-src https:');
+    expect(result).toContain('img-src data: cid:');
+  });
+
+  it('blocks default-src in all modes', () => {
+    const open = processEmailHtml('<html><head></head><body></body></html>');
+    const strict = processEmailHtml('<html><head></head><body></body></html>', {
+      blockExternalImages: true,
+    });
+    expect(open).toContain("default-src 'none'");
+    expect(strict).toContain("default-src 'none'");
+  });
+
+  it('still rewrites links to open in a new tab', () => {
+    const result = processEmailHtml(
+      '<html><head></head><body><a href="https://evil.com">click</a></body></html>',
+    );
+    expect(result).toContain('target="_blank"');
+    expect(result).toContain('rel="noopener noreferrer"');
+  });
+
+  it('works when the input HTML has no explicit head element', () => {
+    const result = processEmailHtml('<p>bare body</p>');
+    expect(result).toContain('Content-Security-Policy');
+  });
+});
+
+describe('buildPlainTextDoc / CSP', () => {
+  it('includes a Content-Security-Policy meta tag', () => {
+    const result = buildPlainTextDoc('<p>hello</p>');
+    expect(result).toContain('Content-Security-Policy');
+  });
+
+  it('allows external images by default', () => {
+    const result = buildPlainTextDoc('');
+    expect(result).toContain('img-src https:');
+  });
+
+  it('blocks external images when blockExternalImages is true', () => {
+    const result = buildPlainTextDoc('', { blockExternalImages: true });
+    expect(result).not.toContain('img-src https:');
+    expect(result).toContain('img-src data: cid:');
+  });
+
+  it('blocks default-src in all modes', () => {
+    expect(buildPlainTextDoc('')).toContain("default-src 'none'");
+    expect(buildPlainTextDoc('', { blockExternalImages: true })).toContain("default-src 'none'");
   });
 });

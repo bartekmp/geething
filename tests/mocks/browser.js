@@ -70,6 +70,7 @@ export function createMockBrowser() {
       create: vi.fn(async () => 'notif-id'),
       clear: vi.fn(async () => true),
       onClicked: { addListener: vi.fn() },
+      onButtonClicked: { addListener: vi.fn() },
     },
     alarms: {
       create: vi.fn(),
