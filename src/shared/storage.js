@@ -76,6 +76,19 @@ export async function savePersistedAccountState(stateObj) {
   await localArea().set({ [STORAGE_KEYS.ACCOUNT_STATE]: stateObj });
 }
 
+export async function getCustomSound() {
+  const result = await localArea().get(STORAGE_KEYS.CUSTOM_SOUND);
+  return result[STORAGE_KEYS.CUSTOM_SOUND] || null;
+}
+
+export async function saveCustomSound(payload) {
+  await localArea().set({ [STORAGE_KEYS.CUSTOM_SOUND]: payload });
+}
+
+export async function clearCustomSound() {
+  await localArea().remove(STORAGE_KEYS.CUSTOM_SOUND);
+}
+
 export async function clearAccountData(accountId) {
   await deleteTokens(accountId);
   const result = await localArea().get(STORAGE_KEYS.SEEN_MESSAGES);

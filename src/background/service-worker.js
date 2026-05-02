@@ -1,12 +1,15 @@
 import { ALARM_NAMES, MAX_FETCH_MESSAGES } from '../shared/constants.js';
 import { DEV_MESSAGE_DETAILS } from './dev-seed.js';
 import {
+  clearCustomSound,
   getPersistedAccountState,
   getSeenMessages,
   getSettings,
+  saveCustomSound,
   savePersistedAccountState,
   saveSeenMessages,
 } from '../shared/storage.js';
+import { playNotificationSound } from './sound.js';
 import {
   AuthError,
   addAccount,
@@ -87,6 +90,9 @@ async function pollAccount(account, { isInitial = false } = {}) {
 
     const settings = await getSettings();
     if (!account.muted && newMessages.length > 0) {
+      // Fire sound first, synchronously, so the Audio element keeps the event
+      // page alive even if the notification step is slow or rejects.
+      playNotificationSound(settings);
       if (newMessages.length === 1) {
         await showNewMailNotification(newMessages[0], account, settings);
       } else {
@@ -269,6 +275,25 @@ async function handleMessage(msg, _sender) {
         { id: 'test', email: 'test@geething', label: 'Test' },
         { ...settings, notificationsEnabled: true },
       );
+      return { ok: true };
+    }
+    case 'geething.testSound': {
+      const settings = await getSettings();
+      await playNotificationSound({ ...settings, notificationSoundEnabled: true });
+      return { ok: true };
+    }
+    case 'geething.uploadCustomSound': {
+      await saveCustomSound({
+        dataUrl: msg.dataUrl,
+        name: msg.name,
+        mimeType: msg.mimeType,
+        size: msg.size,
+        duration: msg.duration,
+      });
+      return { ok: true };
+    }
+    case 'geething.clearCustomSound': {
+      await clearCustomSound();
       return { ok: true };
     }
     default:

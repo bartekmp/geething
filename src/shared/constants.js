@@ -18,6 +18,7 @@ export const STORAGE_KEYS = Object.freeze({
   UNREAD_CACHE: 'unreadCache',
   SEEN_MESSAGES: 'seenMessages',
   ACCOUNT_STATE: 'accountState',
+  CUSTOM_SOUND: 'customSound',
 });
 
 export const ALARM_NAMES = Object.freeze({
@@ -28,6 +29,11 @@ export const DEFAULT_SETTINGS = Object.freeze({
   pollIntervalMinutes: 2,
   notificationsEnabled: true,
   notificationContentMode: 'title-snippet', // 'title' | 'title-snippet'
+  notificationSoundEnabled: false,
+  notificationSoundType: 'default', // 'default' | 'custom'
+  notificationSoundVolume: 0.7,
+  customSoundName: '',
+  customSoundDuration: 0,
   theme: 'auto', // 'auto' | 'light' | 'dark'
   maxMessagesPerAccount: 20,
   autoMarkReadOnOpen: true,
@@ -53,3 +59,6 @@ export const MAX_BADGE_DISPLAY = 99;
 // Hard limits — not user-configurable.
 export const MAX_FETCH_MESSAGES = 100;
 export const MAX_EMAIL_SIZE_BYTES = 5 * 1024 * 1024; // 5 MB
+export const MAX_CUSTOM_SOUND_BYTES = 500 * 1024; // 500 KB
+export const MAX_CUSTOM_SOUND_SECONDS = 5;
+export const DEFAULT_SOUND_PATH = 'sounds/default.wav';

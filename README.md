@@ -16,8 +16,9 @@ A browser extension for multi-account Gmail™ notifications. Get a badge counte
 - **Multiple Gmail™ accounts** — add as many as you need, each with its own color and label; choose which Gmail labels to watch per account (Inbox, Starred, custom labels, etc.)
 - **Badge counter** — total unread count across all accounts, shown on the toolbar icon
 - **Desktop notifications** — notified the moment new mail arrives; click to open, or use the built-in **Mark as Read** / **Archive** buttons directly in the notification
-- **Popup** — tabbed per-account view with sender, subject, and snippet; click any email to read it inline
+- **Popup** — tabbed per-account view with sender, subject, and snippet; click any email to read it inline, save the attachments, or open it directly in Gmail™
 - **Quick actions** — mark as read, archive, move to spam, delete, reply, or open in Gmail™, all without leaving the extension
+- **Notification sounds** — optional audio alert on new mail; choose the built-in sound or upload your own (WAV/MP3/OGG, max 500 KB / 5 s) with adjustable volume
 - **Themes** — light, dark, or auto (follows system preference)
 - **Configurable** — poll interval (1–30 min), max messages per page (5–50), popup size, keyboard shortcuts, and more
 - **Limits** — up to 100 unread messages are fetched per inbox per poll; emails larger than 5 MB cannot be previewed inline (open in Gmail™ instead)
