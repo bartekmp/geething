@@ -26,6 +26,7 @@ import {
 } from './notifications.js';
 import {
   archiveMessage,
+  fetchAttachment,
   fetchLabels,
   fetchMessageDetail,
   fetchMessageMetadata,
@@ -218,6 +219,14 @@ async function handleMessage(msg, _sender) {
       }
       const token = await getValidAccessToken(msg.accountId);
       return fetchMessageDetail(token, msg.messageId);
+    }
+    case 'geething.getAttachment': {
+      const account = await getAccountById(msg.accountId);
+      if (!account) {
+        throw new Error('Account not found');
+      }
+      const token = await getValidAccessToken(msg.accountId);
+      return fetchAttachment(token, msg.messageId, msg.attachmentId);
     }
     case 'geething.action': {
       return performAction(msg);
