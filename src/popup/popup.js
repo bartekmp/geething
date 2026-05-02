@@ -450,13 +450,16 @@ function renderEmailItem(account, message) {
   rowRight.className = 'email-row-right';
   rowRight.appendChild(time);
   if (message.attachments?.length > 0) {
-    const clip = makeSvgIcon(ICONS.paperclip, 12);
-    clip.classList.add('email-attachment-hint');
-    clip.setAttribute(
-      'title',
-      `${message.attachments.length} attachment${message.attachments.length > 1 ? 's' : ''}`,
-    );
-    rowRight.appendChild(clip);
+    const pill = document.createElement('span');
+    pill.className = 'email-attachment-hint';
+    pill.title = `${message.attachments.length} attachment${message.attachments.length > 1 ? 's' : ''}`;
+    pill.appendChild(makeSvgIcon(ICONS.paperclip, 11));
+    if (message.attachments.length > 1) {
+      const count = document.createElement('span');
+      count.textContent = message.attachments.length;
+      pill.appendChild(count);
+    }
+    rowRight.appendChild(pill);
   }
   row.append(sender, rowRight);
 
