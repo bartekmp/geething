@@ -3,6 +3,15 @@
 All notable changes to Geething are documented here.
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/). Versioning follows [Semantic Versioning](https://semver.org/).
 
+## [0.8.0](https://github.com/bartekmp/geething/compare/geething-v0.7.0...geething-v0.8.0) (2026-05-03)
+
+
+### Features
+
+* add poll guard, cross-account validation, and privacy controls ([#41](https://github.com/bartekmp/geething/issues/41)) ([95324ea](https://github.com/bartekmp/geething/commit/95324eaf99fb29f0bebe22680182359ce5f7f0a5))
+* authentication UX ([#43](https://github.com/bartekmp/geething/issues/43)) ([252bce3](https://github.com/bartekmp/geething/commit/252bce3a91ef49dbfb1707377f260ec9f3de3c3c))
+* threaded messages ([#45](https://github.com/bartekmp/geething/issues/45)) ([e6a1a12](https://github.com/bartekmp/geething/commit/e6a1a12b3d5372b90ae8c975a6219284801f204f))
+
 ## [0.7.0](https://github.com/bartekmp/geething/compare/geething-v0.6.0...geething-v0.7.0) (2026-05-02)
 
 

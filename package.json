@@ -1,6 +1,6 @@
 {
   "name": "geething",
-  "version": "0.7.0",
+  "version": "0.8.0",
   "description": "A Firefox extension for Gmail notifications with multi-account support",
   "private": true,
   "type": "module",
