@@ -95,6 +95,14 @@
           When enabled, messages you mark as read stay visible in the list (dimmed) and are removed
           on the next refresh or when the popup is reopened. By default they disappear immediately.
         </p>
+        <label class="row">
+          <span>Group messages by thread</span>
+          <input id="groupThreads" type="checkbox" />
+        </label>
+        <p class="setting-hint">
+          Groups related Gmail™ messages into collapsible threads in the message list. Turn off to
+          show each message as a separate item.
+        </p>
       </section>
 
       <section class="card">
@@ -143,15 +151,15 @@
             <tbody>
               <tr>
                 <td><kbd>j</kbd> / <kbd>↓</kbd></td>
-                <td>Next email</td>
+                <td>Next message or thread</td>
               </tr>
               <tr>
                 <td><kbd>k</kbd> / <kbd>↑</kbd></td>
-                <td>Previous email</td>
+                <td>Previous message or thread</td>
               </tr>
               <tr>
                 <td><kbd>Enter</kbd></td>
-                <td>Open email detail</td>
+                <td>Open message · expand or collapse thread</td>
               </tr>
               <tr>
                 <td><kbd>Escape</kbd></td>
@@ -159,15 +167,15 @@
               </tr>
               <tr>
                 <td><kbd>r</kbd></td>
-                <td>Mark focused email as read</td>
+                <td>Mark focused message or thread as read</td>
               </tr>
               <tr>
                 <td><kbd>a</kbd></td>
-                <td>Archive focused email</td>
+                <td>Archive focused message or thread</td>
               </tr>
               <tr>
                 <td><kbd>o</kbd></td>
-                <td>Open focused email in Gmail™</td>
+                <td>Open focused message or thread in Gmail™</td>
               </tr>
             </tbody>
           </table>

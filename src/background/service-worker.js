@@ -29,6 +29,8 @@ import {
 } from './notifications.js';
 import {
   archiveMessage,
+  archiveThread,
+  spamThread,
   fetchAttachment,
   fetchLabels,
   fetchMessageDetail,
@@ -37,8 +39,10 @@ import {
   markAsRead,
   markAsSpam,
   markAsUnread,
+  markThreadRead,
   moveToTrash,
   starMessage,
+  trashThread,
   unstarMessage,
 } from './gmail-api.js';
 
@@ -164,6 +168,8 @@ async function pollAllAccounts({ isInitial = false } = {}) {
     await updateBadgeOrWarn(total);
     // Persist so the popup sees correct state immediately after SW restart.
     await savePersistedAccountState(Object.fromEntries(accountState));
+    // Notify the popup (if open) so it refreshes without waiting for its own timer.
+    api.runtime.sendMessage({ type: 'geething.newMail' })?.catch(() => {});
     return total;
   } finally {
     clearTimeout(pollGuardTimer);
@@ -210,6 +216,11 @@ async function handleMessage(msg, _sender) {
     case 'geething.addAccount': {
       const acc = await addAccount();
       await pollAccount(acc, { isInitial: true });
+      const total = Array.from(accountState.values()).reduce(
+        (sum, s) => sum + (s.unreadCount || 0),
+        0,
+      );
+      await updateBadgeOrWarn(total);
       return { account: acc };
     }
     case 'geething.reauthorizeAccount': {
@@ -282,6 +293,9 @@ async function handleMessage(msg, _sender) {
     }
     case 'geething.action': {
       return performAction(msg);
+    }
+    case 'geething.threadAction': {
+      return performThreadAction(msg);
     }
     case 'geething.markAllRead': {
       const token = await getValidAccessToken(msg.accountId);
@@ -397,6 +411,37 @@ async function performAction({ accountId, messageId, action }) {
       );
       await updateBadgeOrWarn(total);
     }
+  }
+  return { ok: true };
+}
+
+async function performThreadAction({ accountId, threadId, action }) {
+  const token = await getValidAccessToken(accountId);
+  switch (action) {
+    case 'markRead':
+      await markThreadRead(token, threadId);
+      break;
+    case 'archive':
+      await archiveThread(token, threadId);
+      break;
+    case 'trash':
+      await trashThread(token, threadId);
+      break;
+    case 'spam':
+      await spamThread(token, threadId);
+      break;
+    default:
+      throw new Error(`Unknown thread action: ${action}`);
+  }
+  const acctState = accountState.get(accountId);
+  if (acctState?.messages) {
+    const filtered = acctState.messages.filter((m) => m.threadId !== threadId);
+    setAccountState(accountId, { messages: filtered, unreadCount: filtered.length });
+    const total = Array.from(accountState.values()).reduce(
+      (sum, s) => sum + (s.unreadCount || 0),
+      0,
+    );
+    await updateBadgeOrWarn(total);
   }
   return { ok: true };
 }

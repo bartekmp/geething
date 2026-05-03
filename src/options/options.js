@@ -33,6 +33,7 @@ const els = {
   maxMessagesPerAccountValue: document.getElementById('maxMessagesPerAccountValue'),
   autoMarkReadOnOpen: document.getElementById('autoMarkReadOnOpen'),
   markReadBehavior: document.getElementById('markReadBehavior'),
+  groupThreads: document.getElementById('groupThreads'),
   blockExternalImages: document.getElementById('blockExternalImages'),
   keyboardShortcutsEnabled: document.getElementById('keyboardShortcutsEnabled'),
   shortcutsDetail: document.getElementById('shortcuts-detail'),
@@ -133,6 +134,7 @@ function populateForm() {
   els.maxMessagesPerAccountValue.value = s.maxMessagesPerAccount || 20;
   els.autoMarkReadOnOpen.checked = !!s.autoMarkReadOnOpen;
   els.markReadBehavior.checked = (s.markReadBehavior || 'remove') === 'dim';
+  els.groupThreads.checked = s.groupThreads !== false;
   els.blockExternalImages.checked = !!s.blockExternalImages;
   els.keyboardShortcutsEnabled.checked = s.keyboardShortcutsEnabled !== false;
   els.shortcutsDetail.hidden = !els.keyboardShortcutsEnabled.checked;
@@ -658,6 +660,9 @@ els.autoMarkReadOnOpen.addEventListener('change', () =>
 );
 els.markReadBehavior.addEventListener('change', () =>
   saveSettings({ markReadBehavior: els.markReadBehavior.checked ? 'dim' : 'remove' }),
+);
+els.groupThreads.addEventListener('change', () =>
+  saveSettings({ groupThreads: els.groupThreads.checked }),
 );
 els.blockExternalImages.addEventListener('change', () =>
   saveSettings({ blockExternalImages: els.blockExternalImages.checked }),

@@ -17,7 +17,9 @@ A browser extension for multi-account Gmail™ notifications. Get a badge counte
 - **Badge counter** — total unread count across all accounts, shown on the toolbar icon
 - **Desktop notifications** — notified the moment new mail arrives; click to open, or use the built-in **Mark as Read** / **Archive** buttons directly in the notification
 - **Popup** — tabbed per-account view with sender, subject, and snippet; click any email to read it inline, save the attachments, or open it directly in Gmail™
-- **Quick actions** — mark as read, archive, move to spam, delete, reply, or open in Gmail™, all without leaving the extension
+- **Quick actions** — mark as read, star, archive, move to spam, delete, reply, or open in Gmail™, all without leaving the extension
+- **Conversation threads** — emails that belong to the same Gmail thread are grouped together in the popup; expand a thread inline to see each message individually, with per-message and thread-level actions (reply, star, mark all read, archive all, spam, delete all, open in Gmail™); the detail view shows a collapsible thread context panel so you can jump to any sibling message; threading can be turned off in Settings if you prefer the flat view
+- **Bulk selection** — enter selection mode to pick multiple messages (or whole threads) and mark them read, archive, or delete in one go
 - **Notification sounds** — optional audio alert on new mail; choose the built-in sound or upload your own (WAV/MP3/OGG, max 500 KB / 5 s) with adjustable volume
 - **Themes** — light, dark, or auto (follows system preference)
 - **Privacy controls** — optionally block external images in email previews (including tracking pixels); disabled by default so images load normally
@@ -77,6 +79,20 @@ npm run format
 npx web-ext lint --source-dir=src
 npm run build        # produces a .zip in web-ext-artifacts/
 ```
+
+## Keyboard shortcuts
+
+Active in the popup when focus is not on a button or input. Can be enabled or disabled in Settings.
+
+| Key | Action |
+|-----|--------|
+| `j` / `↓` | Next message or thread |
+| `k` / `↑` | Previous message or thread |
+| `Enter` | Open message · expand or collapse thread |
+| `Escape` | Close detail / close popup |
+| `r` | Mark focused message or thread as read |
+| `a` | Archive focused message or thread |
+| `o` | Open focused message or thread in Gmail™ |
 
 ## Privacy
 

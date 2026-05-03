@@ -1,5 +1,6 @@
 import { applyTheme, watchSystemTheme } from '../shared/theme.js';
 import { buildPlainTextDoc, formatPlainTextEmail, processEmailHtml } from './email-format.js';
+import { groupByThread } from './thread-utils.js';
 
 const api = typeof browser !== 'undefined' ? browser : globalThis.chrome;
 
@@ -40,12 +41,19 @@ const els = {
   composeBtn: document.getElementById('compose-btn'),
   markAllBtn: document.getElementById('mark-all-btn'),
   addBtn: document.getElementById('add-account-btn'),
+  selectBtn: document.getElementById('select-btn'),
   onboardingAddBtn: document.getElementById('onboarding-add-btn'),
   optionsBtn: document.getElementById('options-btn'),
   pagination: document.getElementById('pagination'),
   paginationPrev: document.getElementById('pagination-prev'),
   paginationNext: document.getElementById('pagination-next'),
   paginationInfo: document.getElementById('pagination-info'),
+  bulkBar: document.getElementById('bulk-bar'),
+  bulkCount: document.getElementById('bulk-count'),
+  bulkReadBtn: document.getElementById('bulk-read-btn'),
+  bulkArchiveBtn: document.getElementById('bulk-archive-btn'),
+  bulkTrashBtn: document.getElementById('bulk-trash-btn'),
+  bulkCancelBtn: document.getElementById('bulk-cancel-btn'),
 };
 
 const state = {
@@ -53,6 +61,9 @@ const state = {
   settings: null,
   activeAccountId: null,
   pageByAccount: {},
+  selectionMode: false,
+  selectedMessages: new Set(),
+  expandedThreads: new Set(),
 };
 
 // Message IDs marked read in 'dim' mode — cleared on every loadState().
@@ -285,6 +296,307 @@ async function downloadAttachment(accountId, messageId, attachment) {
   setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
 
+// ── Threading ──────────────────────────────────────────────────────────────
+
+function getThreads(messages) {
+  return state.settings?.groupThreads !== false
+    ? groupByThread(messages)
+    : messages.map((m) => [m]);
+}
+
+async function performThreadAction(accountId, threadId, action) {
+  try {
+    await sendMessage({ type: 'geething.threadAction', accountId, threadId, action });
+    await refresh({ silent: true });
+  } catch (err) {
+    showError(err.message || String(err));
+  }
+}
+
+function persistExpandedThreads() {
+  api.storage.session?.set({ expandedThreads: [...state.expandedThreads] }).catch(() => {});
+}
+
+function renderThreadSubItem(account, message, threadMessages) {
+  const li = document.createElement('li');
+  li.className = 'thread-sub-item';
+  li.tabIndex = 0;
+  li.dataset.accountId = account.id;
+  li.dataset.messageId = message.id;
+
+  const row = document.createElement('div');
+  row.className = 'email-row';
+
+  if (state.selectionMode) {
+    const cb = document.createElement('input');
+    cb.type = 'checkbox';
+    cb.className = 'email-checkbox';
+    cb.checked = state.selectedMessages.has(message.id);
+    cb.addEventListener('change', (e) => {
+      e.stopPropagation();
+      if (cb.checked) {
+        state.selectedMessages.add(message.id);
+      } else {
+        state.selectedMessages.delete(message.id);
+      }
+      updateBulkBar();
+    });
+    li._checkbox = cb;
+    row.appendChild(cb);
+  }
+
+  const sender = document.createElement('span');
+  sender.className = 'thread-sub-sender';
+  sender.textContent = message.from?.name || message.from?.email || 'Unknown';
+
+  const time = document.createElement('span');
+  time.className = 'email-time';
+  time.textContent = formatRelativeTime(message.internalDate);
+
+  row.append(sender, time);
+
+  if (message.attachments?.length > 0) {
+    const attPill = document.createElement('span');
+    attPill.className = 'email-attachment-hint';
+    attPill.title = `${message.attachments.length} attachment${message.attachments.length > 1 ? 's' : ''}`;
+    attPill.appendChild(makeSvgIcon(ICONS.paperclip, 11));
+    if (message.attachments.length > 1) {
+      const cnt = document.createElement('span');
+      cnt.textContent = message.attachments.length;
+      attPill.appendChild(cnt);
+    }
+    row.appendChild(attPill);
+  }
+
+  const snippet = document.createElement('div');
+  snippet.className = 'thread-sub-snippet';
+  snippet.textContent = message.snippet || '';
+
+  const actions = document.createElement('div');
+  actions.className = 'email-actions';
+  actions.append(
+    makeIconBtn('reply', 'Reply', () => openReply(account, message)),
+    makeStarBtn(account.id, message.id, (message.labelIds || []).includes('STARRED')),
+    makeMarkReadToggleBtn(account.id, message.id, dimmedMessages.has(message.id)),
+    makeIconBtn('archive', 'Archive', () => performAction(account.id, message.id, 'archive')),
+    makeIconBtn('spam', 'Spam', () => performAction(account.id, message.id, 'spam'), {
+      danger: true,
+    }),
+    makeIconBtn('trash', 'Delete', () => performAction(account.id, message.id, 'trash'), {
+      danger: true,
+    }),
+    makeIconBtn('open', 'Open in Gmail™', () => openInGmail(account, message.id)),
+  );
+
+  li.append(row, snippet, actions);
+
+  li.addEventListener('click', (e) => {
+    if (e.target.closest('.email-actions') || e.target.type === 'checkbox') {
+      return;
+    }
+    if (state.selectionMode) {
+      if (li._checkbox) {
+        li._checkbox.checked = !li._checkbox.checked;
+        li._checkbox.dispatchEvent(new Event('change'));
+      }
+      return;
+    }
+    openDetail(account, message, threadMessages);
+  });
+
+  li.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      if (state.selectionMode) {
+        li._checkbox?.click();
+      } else {
+        openDetail(account, message, threadMessages);
+      }
+    }
+  });
+
+  return li;
+}
+
+function renderThreadItem(account, messages) {
+  const latest = messages[0];
+  const threadId = latest.threadId || latest.id;
+  const isExpanded = state.expandedThreads.has(threadId);
+
+  const li = document.createElement('li');
+  li.className = 'email-item thread-item';
+  li.style.borderLeftColor = account.color || 'transparent';
+  li.tabIndex = 0;
+  li.dataset.accountId = account.id;
+  li.dataset.threadId = threadId;
+
+  const row = document.createElement('div');
+  row.className = 'email-row';
+
+  // Thread-level checkbox (selects/deselects all messages in the thread).
+  // Built first so sub-item refs are available in its change handler.
+  const subList = document.createElement('ul');
+  subList.className = 'thread-messages';
+  subList.setAttribute('role', 'list');
+  subList.hidden = !isExpanded;
+
+  const subItems = [];
+  for (const msg of messages) {
+    const subItem = renderThreadSubItem(account, msg, messages);
+    subItems.push(subItem);
+    subList.appendChild(subItem);
+  }
+
+  if (state.selectionMode) {
+    const cb = document.createElement('input');
+    cb.type = 'checkbox';
+    cb.className = 'email-checkbox';
+    cb.checked = messages.every((m) => state.selectedMessages.has(m.id));
+    cb.addEventListener('change', (e) => {
+      e.stopPropagation();
+      for (let i = 0; i < messages.length; i++) {
+        if (cb.checked) {
+          state.selectedMessages.add(messages[i].id);
+        } else {
+          state.selectedMessages.delete(messages[i].id);
+        }
+        if (subItems[i]?._checkbox) {
+          subItems[i]._checkbox.checked = cb.checked;
+        }
+      }
+      updateBulkBar();
+    });
+    li._checkbox = cb;
+    subList.hidden = false;
+    row.appendChild(cb);
+  }
+
+  const uniqueSenders = [
+    ...new Set(messages.map((m) => m.from?.name || m.from?.email || 'Unknown')),
+  ];
+  const senderLabel =
+    uniqueSenders.slice(0, 2).join(', ') +
+    (uniqueSenders.length > 2 ? ` +${uniqueSenders.length - 2}` : '');
+
+  const senders = document.createElement('span');
+  senders.className = 'email-sender';
+  senders.textContent = senderLabel;
+
+  const rowRight = document.createElement('span');
+  rowRight.className = 'email-row-right';
+
+  const countPill = document.createElement('span');
+  countPill.className = 'thread-count-pill';
+  countPill.textContent = String(messages.length);
+
+  const time = document.createElement('span');
+  time.className = 'email-time';
+  time.textContent = formatRelativeTime(latest.internalDate);
+
+  rowRight.append(time, countPill);
+
+  const totalAttachments = messages.reduce((n, m) => n + (m.attachments?.length || 0), 0);
+  if (totalAttachments > 0) {
+    const attPill = document.createElement('span');
+    attPill.className = 'email-attachment-hint';
+    attPill.title = `${totalAttachments} attachment${totalAttachments > 1 ? 's' : ''} in thread`;
+    attPill.appendChild(makeSvgIcon(ICONS.paperclip, 11));
+    if (totalAttachments > 1) {
+      const cnt = document.createElement('span');
+      cnt.textContent = totalAttachments;
+      attPill.appendChild(cnt);
+    }
+    rowRight.appendChild(attPill);
+  }
+
+  row.append(senders, rowRight);
+
+  const subject = document.createElement('div');
+  subject.className = 'email-subject';
+  subject.textContent = latest.subject || '(no subject)';
+
+  const snippet = document.createElement('div');
+  snippet.className = 'email-snippet';
+  snippet.textContent = latest.snippet || '';
+
+  const isThreadStarred = messages.some((m) => (m.labelIds || []).includes('STARRED'));
+
+  const actions = document.createElement('div');
+  actions.className = 'email-actions';
+  actions.append(
+    makeIconBtn('reply', 'Reply', () => openReply(account, latest)),
+    makeStarBtn(account.id, latest.id, isThreadStarred),
+    makeIconBtn('markRead', 'Mark all as read', () =>
+      performThreadAction(account.id, threadId, 'markRead'),
+    ),
+    makeIconBtn('archive', 'Archive thread', () =>
+      performThreadAction(account.id, threadId, 'archive'),
+    ),
+    makeIconBtn('spam', 'Spam', () => performThreadAction(account.id, threadId, 'spam'), {
+      danger: true,
+    }),
+    makeIconBtn(
+      'trash',
+      'Delete thread',
+      () => performThreadAction(account.id, threadId, 'trash'),
+      {
+        danger: true,
+      },
+    ),
+    makeIconBtn('open', 'Open thread in Gmail™', () => {
+      performThreadAction(account.id, threadId, 'markRead').catch(() => {});
+      api.tabs.create({
+        url: `https://mail.google.com/mail/?authuser=${encodeURIComponent(account.email)}#inbox/${threadId}`,
+      });
+      window.close();
+    }),
+  );
+
+  li.append(row, subject, snippet, actions, subList);
+
+  function toggleExpand() {
+    if (subList.hidden) {
+      state.expandedThreads.add(threadId);
+      subList.hidden = false;
+    } else {
+      state.expandedThreads.delete(threadId);
+      subList.hidden = true;
+    }
+    persistExpandedThreads();
+  }
+
+  li.addEventListener('click', (e) => {
+    if (
+      e.target.closest('.email-actions') ||
+      e.target.closest('.thread-messages') ||
+      e.target.type === 'checkbox'
+    ) {
+      return;
+    }
+    if (state.selectionMode) {
+      if (li._checkbox) {
+        li._checkbox.checked = !li._checkbox.checked;
+        li._checkbox.dispatchEvent(new Event('change'));
+      }
+      return;
+    }
+    toggleExpand();
+  });
+
+  li.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      if (state.selectionMode) {
+        li._checkbox?.click();
+      } else {
+        toggleExpand();
+      }
+    }
+  });
+
+  return li;
+}
+
 // ── Render ─────────────────────────────────────────────────────────────────
 function updateGmailBtn() {
   const account = getActiveAccount();
@@ -314,6 +626,73 @@ function updateMarkAllBtn() {
   els.markAllBtn.hidden = !hasMessages;
 }
 
+function updateSelectBtn() {
+  const account = getActiveAccount();
+  const hasMessages = (account?.messages?.length || 0) > 0;
+  els.selectBtn.hidden = !hasMessages;
+  if (!hasMessages && state.selectionMode) {
+    state.selectionMode = false;
+    state.selectedMessages.clear();
+    els.selectBtn.classList.remove('active');
+    updateBulkBar();
+  }
+}
+
+function updateBulkBar() {
+  els.bulkBar.hidden = !state.selectionMode;
+  if (!state.selectionMode) {
+    return;
+  }
+  const count = state.selectedMessages.size;
+  els.bulkCount.textContent =
+    count === 0 ? 'No messages selected' : `${count} message${count !== 1 ? 's' : ''} selected`;
+  els.bulkReadBtn.disabled = count === 0;
+  els.bulkArchiveBtn.disabled = count === 0;
+  els.bulkTrashBtn.disabled = count === 0;
+}
+
+function toggleSelectMode() {
+  state.selectionMode = !state.selectionMode;
+  if (!state.selectionMode) {
+    state.selectedMessages.clear();
+  }
+  els.selectBtn.classList.toggle('active', state.selectionMode);
+  updateBulkBar();
+  renderList();
+}
+
+async function bulkAction(action) {
+  const account = getActiveAccount();
+  if (!account) {
+    return;
+  }
+  const ids = [...state.selectedMessages];
+  if (!ids.length) {
+    return;
+  }
+  try {
+    [els.bulkReadBtn, els.bulkArchiveBtn, els.bulkTrashBtn].forEach((b) => {
+      b.disabled = true;
+    });
+    await Promise.all(
+      ids.map((id) =>
+        sendMessage({
+          type: 'geething.action',
+          accountId: account.id,
+          messageId: id,
+          action,
+        }).catch(() => {}),
+      ),
+    );
+    state.selectedMessages.clear();
+    state.selectionMode = false;
+    els.selectBtn.classList.remove('active');
+    await loadState();
+  } catch (err) {
+    showError(err.message || String(err));
+  }
+}
+
 function renderTabs() {
   clearNode(els.tabs);
   for (const account of state.accounts) {
@@ -340,10 +719,17 @@ function renderTabs() {
     tab.addEventListener('click', () => {
       state.activeAccountId = account.id;
       state.pageByAccount[account.id] = 0;
+      if (state.selectionMode) {
+        state.selectedMessages.clear();
+        updateBulkBar();
+      }
+      state.expandedThreads.clear();
+      persistExpandedThreads();
       renderTabs();
       renderList();
       updateGmailBtn();
       updateMarkAllBtn();
+      updateSelectBtn();
     });
     els.tabs.appendChild(tab);
   }
@@ -408,12 +794,13 @@ function renderList() {
     showError(null);
   }
   const messages = account.messages || [];
+  const threads = getThreads(messages);
   const perPage = state.settings?.maxMessagesPerAccount || 20;
-  const totalPages = Math.max(1, Math.ceil(messages.length / perPage));
+  const totalPages = Math.max(1, Math.ceil(threads.length / perPage));
   const page = Math.min(state.pageByAccount[account.id] || 0, totalPages - 1);
   state.pageByAccount[account.id] = page;
 
-  if (!messages.length) {
+  if (!threads.length) {
     const empty = document.createElement('li');
     empty.className = 'empty-state';
     const p = document.createElement('p');
@@ -423,11 +810,15 @@ function renderList() {
     els.pagination.hidden = true;
     return;
   }
-  const pageMessages = messages.slice(page * perPage, (page + 1) * perPage);
-  for (const msg of pageMessages) {
-    els.list.appendChild(renderEmailItem(account, msg));
+  const pageThreads = threads.slice(page * perPage, (page + 1) * perPage);
+  for (const group of pageThreads) {
+    if (group.length === 1) {
+      els.list.appendChild(renderEmailItem(account, group[0]));
+    } else {
+      els.list.appendChild(renderThreadItem(account, group));
+    }
   }
-  renderPagination(messages.length, page, totalPages);
+  renderPagination(threads.length, page, totalPages);
 }
 
 function renderEmailItem(account, message) {
@@ -463,6 +854,24 @@ function renderEmailItem(account, message) {
   }
   row.append(sender, rowRight);
 
+  if (state.selectionMode) {
+    const cb = document.createElement('input');
+    cb.type = 'checkbox';
+    cb.className = 'email-checkbox';
+    cb.checked = state.selectedMessages.has(message.id);
+    cb.addEventListener('change', (e) => {
+      e.stopPropagation();
+      if (cb.checked) {
+        state.selectedMessages.add(message.id);
+      } else {
+        state.selectedMessages.delete(message.id);
+      }
+      updateBulkBar();
+    });
+    li._checkbox = cb;
+    row.insertBefore(cb, row.firstChild);
+  }
+
   const subject = document.createElement('div');
   subject.className = 'email-subject';
   subject.textContent = message.subject || '(no subject)';
@@ -494,11 +903,25 @@ function renderEmailItem(account, message) {
     if (e.target.closest('.email-actions')) {
       return;
     }
+    if (e.target.type === 'checkbox') {
+      return;
+    }
+    if (state.selectionMode) {
+      if (li._checkbox) {
+        li._checkbox.checked = !li._checkbox.checked;
+        li._checkbox.dispatchEvent(new Event('change'));
+      }
+      return;
+    }
     openDetail(account, message);
   });
   li.addEventListener('keydown', (e) => {
     if (e.key === 'Enter') {
-      openDetail(account, message);
+      if (state.selectionMode) {
+        li._checkbox?.click();
+      } else {
+        openDetail(account, message);
+      }
     }
   });
   return li;
@@ -555,7 +978,7 @@ function renderLoadingInto(node) {
   node.appendChild(wrap);
 }
 
-async function openDetail(account, message) {
+async function openDetail(account, message, threadMessages = null) {
   els.detail.hidden = false;
   clearNode(els.detailActions);
   renderLoadingInto(els.detailContent);
@@ -565,7 +988,7 @@ async function openDetail(account, message) {
       accountId: account.id,
       messageId: message.id,
     });
-    renderDetail(account, detail);
+    renderDetail(account, detail, threadMessages);
     if (state.settings?.autoMarkReadOnOpen) {
       performAction(account.id, message.id, 'markRead');
       detailMarkReadBtn?.setRead(true);
@@ -632,7 +1055,84 @@ function renderAttachmentList(accountId, messageId, attachments) {
   return section;
 }
 
-function renderDetail(account, detail) {
+function renderThreadContext(account, currentId, threadMessages) {
+  const section = document.createElement('div');
+  section.className = 'thread-context';
+
+  const header = document.createElement('div');
+  header.className = 'thread-context-header';
+  header.setAttribute('role', 'button');
+  header.tabIndex = 0;
+  header.setAttribute('aria-expanded', 'true');
+
+  const headerLabel = document.createElement('span');
+  headerLabel.textContent = `Thread · ${threadMessages.length} messages`;
+
+  const chevron = makeSvgIcon('M16.59 8.59L12 13.17 7.41 8.59 6 10l6 6 6-6z', 14);
+  chevron.classList.add('thread-context-chevron');
+
+  header.append(headerLabel, chevron);
+  section.appendChild(header);
+
+  const list = document.createElement('ul');
+  list.className = 'thread-context-list';
+  for (const msg of threadMessages) {
+    const li = document.createElement('li');
+    const isCurrent = msg.id === currentId;
+    li.className = `thread-context-item${isCurrent ? ' current' : ''}`;
+
+    const row = document.createElement('div');
+    row.className = 'thread-context-item-row';
+
+    const sender = document.createElement('span');
+    sender.className = 'thread-context-sender';
+    sender.textContent = msg.from?.name || msg.from?.email || 'Unknown';
+
+    const time = document.createElement('span');
+    time.className = 'thread-context-time';
+    time.textContent = formatRelativeTime(msg.internalDate);
+
+    row.append(sender, time);
+
+    const snippet = document.createElement('div');
+    snippet.className = 'thread-context-snippet';
+    snippet.textContent = msg.snippet || '';
+
+    li.append(row, snippet);
+
+    if (!isCurrent) {
+      li.tabIndex = 0;
+      li.addEventListener('click', () => openDetail(account, msg, threadMessages));
+      li.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          openDetail(account, msg, threadMessages);
+        }
+      });
+    }
+
+    list.appendChild(li);
+  }
+  section.appendChild(list);
+
+  function toggleContext() {
+    const nowHidden = !list.hidden;
+    list.hidden = nowHidden;
+    chevron.style.transform = nowHidden ? 'rotate(-90deg)' : '';
+    header.setAttribute('aria-expanded', String(!nowHidden));
+  }
+  header.addEventListener('click', toggleContext);
+  header.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      toggleContext();
+    }
+  });
+
+  return section;
+}
+
+function renderDetail(account, detail, threadMessages = null) {
   clearNode(els.detailContent);
   clearNode(els.detailActions);
 
@@ -746,6 +1246,9 @@ function renderDetail(account, detail) {
     : '';
 
   const nodes = [subject, from, date];
+  if (threadMessages && threadMessages.length > 1) {
+    nodes.push(renderThreadContext(account, detail.id, threadMessages));
+  }
   if (detail.attachments?.length > 0) {
     nodes.push(renderAttachmentList(account.id, detail.id, detail.attachments));
   }
@@ -774,8 +1277,9 @@ els.paginationNext.addEventListener('click', () => {
     return;
   }
   const messages = account.messages || [];
+  const threads = getThreads(messages);
   const perPage = state.settings?.maxMessagesPerAccount || 20;
-  const totalPages = Math.ceil(messages.length / perPage);
+  const totalPages = Math.ceil(threads.length / perPage);
   state.pageByAccount[account.id] = Math.min(
     totalPages - 1,
     (state.pageByAccount[account.id] || 0) + 1,
@@ -786,6 +1290,18 @@ els.paginationNext.addEventListener('click', () => {
 
 // ── Topbar handlers ────────────────────────────────────────────────────────
 els.refreshBtn.addEventListener('click', () => refresh());
+els.selectBtn.addEventListener('click', toggleSelectMode);
+els.bulkReadBtn.addEventListener('click', () => bulkAction('markRead'));
+els.bulkArchiveBtn.addEventListener('click', () => bulkAction('archive'));
+els.bulkTrashBtn.addEventListener('click', () => bulkAction('trash'));
+els.bulkCancelBtn.addEventListener('click', () => {
+  state.selectionMode = false;
+  state.selectedMessages.clear();
+  els.selectBtn.classList.remove('active');
+  updateBulkBar();
+  renderList();
+  updateSelectBtn();
+});
 els.markAllBtn.addEventListener('click', async () => {
   const account = getActiveAccount();
   if (!account) {
@@ -819,7 +1335,13 @@ els.optionsBtn.addEventListener('click', () => {
 
 // ── State ──────────────────────────────────────────────────────────────────
 async function loadState() {
-  const result = await sendMessage({ type: 'geething.getState' });
+  const [result, sessionData] = await Promise.all([
+    sendMessage({ type: 'geething.getState' }),
+    api.storage.session?.get('expandedThreads').catch(() => ({})) ?? {},
+  ]);
+  if (Array.isArray(sessionData?.expandedThreads)) {
+    state.expandedThreads = new Set(sessionData.expandedThreads);
+  }
   state.accounts = result.accounts || [];
   state.settings = result.settings || {};
   dimmedMessages.clear();
@@ -835,6 +1357,7 @@ async function loadState() {
   renderList();
   updateGmailBtn();
   updateMarkAllBtn();
+  updateSelectBtn();
   setLoading(false);
 }
 
@@ -860,7 +1383,7 @@ function startLivePoll() {
   if (livePollHandle) {
     return;
   }
-  livePollHandle = setInterval(() => refresh({ silent: true }), LIVE_POLL_MS);
+  livePollHandle = setInterval(() => loadState(), LIVE_POLL_MS);
 }
 
 function stopLivePoll() {
@@ -868,10 +1391,11 @@ function stopLivePoll() {
   livePollHandle = null;
 }
 
-// Message from background when new mail arrives while popup is open.
+// Message from background after each poll cycle — read the already-updated state
+// instead of triggering another Gmail API poll.
 api.runtime.onMessage.addListener((msg) => {
   if (msg?.type === 'geething.newMail') {
-    refresh({ silent: true });
+    loadState();
   }
 });
 
@@ -937,6 +1461,14 @@ document.addEventListener('keydown', (e) => {
       if (current < 0) {
         break;
       }
+      if (state.selectionMode) {
+        const cb = items[current]._checkbox;
+        if (cb) {
+          cb.checked = !cb.checked;
+          cb.dispatchEvent(new Event('change'));
+        }
+        break;
+      }
       items[current].click();
       break;
     }
@@ -947,9 +1479,11 @@ document.addEventListener('keydown', (e) => {
       if (current < 0) {
         break;
       }
-      const { accountId, messageId } = items[current].dataset;
+      const { accountId, messageId, threadId } = items[current].dataset;
       if (accountId && messageId) {
         performAction(accountId, messageId, 'markRead');
+      } else if (accountId && threadId) {
+        performThreadAction(accountId, threadId, 'markRead');
       }
       break;
     }
@@ -957,9 +1491,11 @@ document.addEventListener('keydown', (e) => {
       if (current < 0) {
         break;
       }
-      const { accountId, messageId } = items[current].dataset;
+      const { accountId, messageId, threadId } = items[current].dataset;
       if (accountId && messageId) {
         performAction(accountId, messageId, 'archive');
+      } else if (accountId && threadId) {
+        performThreadAction(accountId, threadId, 'archive');
       }
       break;
     }
@@ -967,10 +1503,15 @@ document.addEventListener('keydown', (e) => {
       if (current < 0) {
         break;
       }
-      const { accountId, messageId } = items[current].dataset;
+      const { accountId, messageId, threadId } = items[current].dataset;
       const account = state.accounts.find((acc) => acc.id === accountId);
       if (account && messageId) {
         openInGmail(account, messageId);
+      } else if (account && threadId) {
+        performThreadAction(accountId, threadId, 'markRead').catch(() => {});
+        const url = `https://mail.google.com/mail/?authuser=${encodeURIComponent(account.email)}#inbox/${threadId}`;
+        api.tabs.create({ url });
+        window.close();
       }
       break;
     }

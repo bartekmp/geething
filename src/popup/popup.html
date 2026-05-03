@@ -61,6 +61,19 @@
             <path d="M11 11V5h2v6h6v2h-6v6h-2v-6H5v-2z" />
           </svg>
         </button>
+        <button
+          id="select-btn"
+          class="icon-btn"
+          title="Select messages"
+          aria-label="Select messages"
+          hidden
+        >
+          <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true" fill="currentColor">
+            <path
+              d="M19 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V5a2 2 0 0 0-2-2zm-9 14-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"
+            />
+          </svg>
+        </button>
         <button id="options-btn" class="icon-btn" title="Settings" aria-label="Settings">
           <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true" fill="currentColor">
             <path
@@ -92,6 +105,20 @@
         <span>Loading…</span>
       </div>
     </main>
+
+    <div id="bulk-bar" class="bulk-bar" hidden aria-live="polite">
+      <span id="bulk-count" class="bulk-count"></span>
+      <div class="bulk-actions">
+        <button id="bulk-read-btn" type="button" class="bulk-action-btn" disabled>Mark read</button>
+        <button id="bulk-archive-btn" type="button" class="bulk-action-btn" disabled>
+          Archive
+        </button>
+        <button id="bulk-trash-btn" type="button" class="bulk-action-btn danger" disabled>
+          Delete
+        </button>
+        <button id="bulk-cancel-btn" type="button" class="bulk-action-btn">Cancel</button>
+      </div>
+    </div>
 
     <nav id="pagination" class="pagination-bar" hidden aria-label="Email page navigation">
       <button id="pagination-prev" type="button" class="pagination-btn" aria-label="Previous page">

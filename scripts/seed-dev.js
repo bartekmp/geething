@@ -132,9 +132,8 @@ async function handleMessage(msg) {
     }
     case 'geething.markAllRead': {
       const acctState = accountState.get(msg.accountId);
-      if (acctState?.messages) {
-        const filtered = acctState.messages.filter((m) => m.id !== msg.messageId);
-        accountState.set(msg.accountId, { ...acctState, messages: filtered, unreadCount: filtered.length });
+      if (acctState) {
+        accountState.set(msg.accountId, { ...acctState, messages: [], unreadCount: 0 });
         const total = Array.from(accountState.values()).reduce((s, a) => s + a.unreadCount, 0);
         await updateBadge(total);
       }
