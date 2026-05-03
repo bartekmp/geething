@@ -725,6 +725,108 @@ body {
   text-overflow: ellipsis;
 }
 
+/* ── Thread context in detail view ─────────────────── */
+.thread-context {
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+  margin-bottom: 8px;
+}
+
+.thread-context-header {
+  padding: 5px 12px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  background: var(--bg-secondary);
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  cursor: pointer;
+  user-select: none;
+}
+
+.thread-context-header:hover {
+  background: var(--bg-hover);
+}
+
+.thread-context-chevron {
+  flex-shrink: 0;
+  transition: transform 0.15s ease;
+  color: var(--text-muted);
+}
+
+.thread-context-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  max-height: 153px; /* ~3 items */
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+.thread-context-item {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 7px 12px;
+  border-bottom: 1px solid var(--border);
+  transition: background 0.1s ease;
+}
+
+.thread-context-item:last-child {
+  border-bottom: none;
+}
+
+.thread-context-item:not(.current) {
+  cursor: pointer;
+}
+
+.thread-context-item:not(.current):hover,
+.thread-context-item:not(.current):focus {
+  background: var(--bg-hover);
+  outline: none;
+}
+
+.thread-context-item.current {
+  background: color-mix(in srgb, var(--accent) 8%, transparent);
+}
+
+.thread-context-item-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.thread-context-sender {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-primary);
+  flex: 1;
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.thread-context-time {
+  font-size: 12px;
+  color: var(--text-secondary);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.thread-context-snippet {
+  font-size: 12px;
+  color: var(--text-secondary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
 /* ── Selection mode ─────────────────────────────────── */
 
 /* Indent subject/snippet to align under sender when checkbox is present */

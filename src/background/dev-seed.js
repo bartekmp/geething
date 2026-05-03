@@ -773,6 +773,145 @@ We look forward to seeing you.
 Kind regards,
 Medicover Patient Services`;
 
+// ── 10-message GraphQL RFC thread (work account) ──────────────────────────────
+
+const BODY_TEXT_RFC_KICK = `\
+Team,
+
+I've been thinking about replacing our dashboard API from REST to GraphQL. Short summary of the problem:
+
+- Top 10 endpoints account for ~40% of total API traffic
+- Dashboard makes 6–8 separate calls per page load (over-fetching)
+- Mobile clients are getting hit especially hard
+
+I've drafted a short RFC — see the attachment. Please read it and share your thoughts before Friday EOD.
+
+Key questions I want input on:
+1. GraphQL vs. REST + OpenAPI spec generation (incremental approach)?
+2. If GraphQL: federated gateway now, or monolithic schema first?
+3. Migration path — incremental per-domain vs. big-bang cutover?
+
+—Piotr`;
+
+const BODY_TEXT_RFC_MICHAL = `\
+I'm in favour.
+
+We've been fighting over-fetching issues for months. GraphQL lets the frontend request exactly what it needs, which also makes mocking in tests much cleaner — you mock a schema instead of 6 different endpoints.
+
+The federated vs. monolithic question: start monolithic. We don't have enough distinct ownership boundaries yet to justify federation, and the operational overhead isn't worth it at our scale.
+
++1 from me.
+
+—Michał`;
+
+const BODY_TEXT_RFC_KAROLINA = `\
+I'd be more cautious.
+
+Two concrete concerns:
+
+1. **Auth middleware** — our current token validation hooks into the REST layer at the route level. GraphQL's single-endpoint model means we'd need to rewrite that, probably with a field-level directive approach or a resolver wrapper. That's non-trivial.
+
+2. **N+1 queries** — if we don't add DataLoaders from day one, the dashboard perf will get *worse*, not better. I've seen this happen on the billing service migration at my last job. It took 3 sprints to retrofit them in.
+
+Not a -1, just want these two things explicitly scoped into the RFC before we commit.
+
+—Karolina`;
+
+const BODY_TEXT_RFC_BARTOSZ = `\
+Agree with Michał. The API rate tracking sheet backs this up — I ran the numbers last week:
+
+| Endpoint          | Calls/day | Data fetched | Data used |
+|-------------------|-----------|-------------|-----------|
+| /projects/list    | 84k       | 42 MB       | ~9 MB     |
+| /users/search     | 61k       | 28 MB       | ~4 MB     |
+| /dashboard/stats  | 103k      | 67 MB       | ~11 MB    |
+
+We're fetching roughly 4–6× what we actually render. GraphQL would fix this structurally.
+
+On Karolina's concern about DataLoaders — she's right, but it's a known solvable problem. We can make DataLoader usage a mandatory code-review checklist item.
+
++1 GraphQL.
+
+—Bartosz`;
+
+const BODY_TEXT_RFC_ANNA = `\
+Before we commit — has anyone seriously looked at REST + OpenAPI spec generation as an alternative?
+
+The pitch:
+- No middleware rewrite
+- Typed clients (we could use openapi-typescript)
+- Incremental — add a spec to each service as we touch it
+- Caching stays simple (HTTP semantics)
+
+The GraphQL wins are real, but so is the migration cost. We'd be rewriting the auth layer, adding DataLoaders, updating every client, and training the team on a new query model — all at once.
+
+An OpenAPI approach gets us 70% of the benefits with 20% of the risk. Worth at least discussing before we greenlight a full rewrite.
+
+—Anna`;
+
+const BODY_TEXT_RFC_MICHAL_2 = `\
+Anna, fair point — I did consider this.
+
+The OpenAPI approach still forces us to either add a BFF layer or accept that clients keep over-fetching. The GraphQL win isn't just typing, it's the *client-driven query model*. No BFF needed; the frontend defines its own data shape.
+
+Also: the auth middleware concern is real but bounded. We already have a token validation util — it just needs to plug into a resolver wrapper instead of an Express middleware. I'd estimate 3–4 days of work, not a sprint.
+
+Agree on incremental though: we could start with one subdomain (e.g. projects) and prove the model before rolling out.
+
+—Michał`;
+
+const BODY_TEXT_RFC_PIOTR_VOTE = `\
+Good discussion. Let's move to a decision.
+
+**Please vote by replying to this thread by Friday 17:00:**
+
+- +1 → GraphQL (with Karolina's conditions: DataLoaders mandatory, auth middleware scoped into RFC)
+- -1 → REST + OpenAPI (incremental approach)
+-  0 → Defer — need more info (specify what)
+
+I'll tally Friday evening and we start implementation planning Monday.
+
+Anna — if GraphQL wins, would you be willing to own the auth middleware piece? Feels like the right person given you've flagged it.
+
+—Piotr`;
+
+const BODY_TEXT_RFC_BARTOSZ_VOTE = `\
++1 — GraphQL. Let's go.
+
+One hard requirement I'd add to Anna's list: **@complexity limits from day one**. Without a query complexity budget, a single badly-written client query can take down the whole API. Easy to add at schema setup time; very painful to retrofit.
+
+—Bartosz`;
+
+const BODY_TEXT_RFC_ANNA_VOTE = `\
+-1 for now — not -1 forever. I'm a conditional yes.
+
+I'll vote yes if we agree on these three things upfront:
+
+1. DataLoaders are mandatory — no resolver ships without one if it touches the DB
+2. We keep the REST endpoints alive for 1 sprint as a rollback path
+3. No schema changes without a short RFC (even a Slack doc counts)
+
+If those three go into the GraphQL project scope, I'll switch my vote to +1 and happily own the auth middleware piece.
+
+—Anna`;
+
+const BODY_TEXT_RFC_KAROLINA_CLOSE = `\
+Current tally:
+
+| Person  | Vote | Notes |
+|---------|------|-------|
+| Michał  | +1   | Monolithic schema first |
+| Bartosz | +1   | @complexity limits required |
+| Anna    | -1 → conditional +1 | 3 conditions (see below) |
+| Piotr   | ?    | |
+| Karolina| ?    | |
+
+Anna's three conditions seem entirely reasonable to me — I'd add a 4th: we run a load test against the GraphQL layer before cutting over any production traffic.
+
+Piotr — your vote (and mine) would make this unanimous if you're both +1. I'm leaning +1 with the conditions. Waiting on you to close this out.
+
+—Karolina`;
+
 // ── New messages for threaded conversations ──────────────────────────────────
 
 // dev-msg-1b — same PR thread: merge notification
@@ -987,6 +1126,138 @@ export const DEV_MESSAGE_DETAILS = new Map([
       snippet: "Quick update — I addressed Piotr's review comments. PR ready for final review.",
       bodyHtml: null,
       bodyText: BODY_TEXT_KAROLINA_FOLLOWUP,
+    },
+  ],
+  // ── 10-message GraphQL RFC thread (work account) ─────────────────────────
+  [
+    'dev-t-01',
+    {
+      id: 'dev-t-01',
+      threadId: 'thread-graphql-rfc',
+      subject: 'RFC: Migrate dashboard API to GraphQL',
+      from: { name: 'Piotr Nowak', email: 'p.nowak@acme.com' },
+      snippet:
+        "I've been thinking about replacing our dashboard API from REST to GraphQL — see the attached RFC.",
+      bodyHtml: null,
+      bodyText: BODY_TEXT_RFC_KICK,
+      attachments: [
+        {
+          filename: 'graphql_rfc_draft.pdf',
+          mimeType: 'application/pdf',
+          size: 184_320,
+          attachmentId: null,
+          inlineData: devAttachData('GraphQL RFC draft v1'),
+        },
+      ],
+    },
+  ],
+  [
+    'dev-t-02',
+    {
+      id: 'dev-t-02',
+      threadId: 'thread-graphql-rfc',
+      subject: 'Re: RFC: Migrate dashboard API to GraphQL',
+      from: { name: 'Michał Tkaczyk', email: 'm.tkaczyk@acme.com' },
+      snippet: "I'm in favour. We've been fighting over-fetching issues for months.",
+      bodyHtml: null,
+      bodyText: BODY_TEXT_RFC_MICHAL,
+    },
+  ],
+  [
+    'dev-t-03',
+    {
+      id: 'dev-t-03',
+      threadId: 'thread-graphql-rfc',
+      subject: 'Re: RFC: Migrate dashboard API to GraphQL',
+      from: { name: 'Karolina Wiśniewska', email: 'k.wisniewska@acme.com' },
+      snippet: "I'd be more cautious — auth middleware rewrite and N+1 queries are real concerns.",
+      bodyHtml: null,
+      bodyText: BODY_TEXT_RFC_KAROLINA,
+    },
+  ],
+  [
+    'dev-t-04',
+    {
+      id: 'dev-t-04',
+      threadId: 'thread-graphql-rfc',
+      subject: 'Re: RFC: Migrate dashboard API to GraphQL',
+      from: { name: 'Bartosz Pietrzak', email: 'b.pietrzak@acme.com' },
+      snippet: 'The API rate tracking sheet backs this up — we fetch 4–6× what we actually render.',
+      bodyHtml: null,
+      bodyText: BODY_TEXT_RFC_BARTOSZ,
+    },
+  ],
+  [
+    'dev-t-05',
+    {
+      id: 'dev-t-05',
+      threadId: 'thread-graphql-rfc',
+      subject: 'Re: RFC: Migrate dashboard API to GraphQL',
+      from: { name: 'Anna Kowalska', email: 'a.kowalska@acme.com' },
+      snippet: 'Has anyone seriously looked at REST + OpenAPI spec generation as an alternative?',
+      bodyHtml: null,
+      bodyText: BODY_TEXT_RFC_ANNA,
+    },
+  ],
+  [
+    'dev-t-06',
+    {
+      id: 'dev-t-06',
+      threadId: 'thread-graphql-rfc',
+      subject: 'Re: RFC: Migrate dashboard API to GraphQL',
+      from: { name: 'Michał Tkaczyk', email: 'm.tkaczyk@acme.com' },
+      snippet:
+        'Anna — fair point, but the OpenAPI approach still forces a BFF or continued over-fetching.',
+      bodyHtml: null,
+      bodyText: BODY_TEXT_RFC_MICHAL_2,
+    },
+  ],
+  [
+    'dev-t-07',
+    {
+      id: 'dev-t-07',
+      threadId: 'thread-graphql-rfc',
+      subject: 'Re: RFC: Migrate dashboard API to GraphQL',
+      from: { name: 'Piotr Nowak', email: 'p.nowak@acme.com' },
+      snippet: 'Good discussion. Vote by Friday 17:00 — +1 GraphQL, -1 REST+OpenAPI, 0 defer.',
+      bodyHtml: null,
+      bodyText: BODY_TEXT_RFC_PIOTR_VOTE,
+    },
+  ],
+  [
+    'dev-t-08',
+    {
+      id: 'dev-t-08',
+      threadId: 'thread-graphql-rfc',
+      subject: 'Re: RFC: Migrate dashboard API to GraphQL',
+      from: { name: 'Bartosz Pietrzak', email: 'b.pietrzak@acme.com' },
+      snippet: '+1 — GraphQL. Hard requirement: @complexity limits from day one.',
+      bodyHtml: null,
+      bodyText: BODY_TEXT_RFC_BARTOSZ_VOTE,
+    },
+  ],
+  [
+    'dev-t-09',
+    {
+      id: 'dev-t-09',
+      threadId: 'thread-graphql-rfc',
+      subject: 'Re: RFC: Migrate dashboard API to GraphQL',
+      from: { name: 'Anna Kowalska', email: 'a.kowalska@acme.com' },
+      snippet: '-1 for now — not -1 forever. Conditional yes if we agree on 3 things.',
+      bodyHtml: null,
+      bodyText: BODY_TEXT_RFC_ANNA_VOTE,
+    },
+  ],
+  [
+    'dev-t-10',
+    {
+      id: 'dev-t-10',
+      threadId: 'thread-graphql-rfc',
+      subject: 'Re: RFC: Migrate dashboard API to GraphQL',
+      from: { name: 'Karolina Wiśniewska', email: 'k.wisniewska@acme.com' },
+      snippet: 'Current tally: 2×+1, 1× conditional +1 — Piotr your vote closes this.',
+      bodyHtml: null,
+      bodyText: BODY_TEXT_RFC_KAROLINA_CLOSE,
     },
   ],
   // ── 20 extra personal-account messages ──────────────────────────────────
@@ -1264,7 +1535,23 @@ const ACCOUNT_MESSAGES = {
     'dev-p-19',
     'dev-p-20',
   ],
-  'dev-2': ['dev-msg-5', 'dev-msg-5b', 'dev-msg-6', 'dev-msg-7', 'dev-msg-7b'],
+  'dev-2': [
+    'dev-msg-5',
+    'dev-msg-5b',
+    'dev-msg-6',
+    'dev-msg-7',
+    'dev-msg-7b',
+    'dev-t-01',
+    'dev-t-02',
+    'dev-t-03',
+    'dev-t-04',
+    'dev-t-05',
+    'dev-t-06',
+    'dev-t-07',
+    'dev-t-08',
+    'dev-t-09',
+    'dev-t-10',
+  ],
 };
 
 export function buildMessages() {
@@ -1302,6 +1589,16 @@ export function buildMessages() {
     'dev-p-18': t - 24 * 86_400_000,
     'dev-p-19': t - 27 * 86_400_000,
     'dev-p-20': t - 30 * 86_400_000,
+    'dev-t-01': t - 8 * 3_600_000,
+    'dev-t-02': t - 7 * 3_600_000 - 30 * 60_000,
+    'dev-t-03': t - 7 * 3_600_000,
+    'dev-t-04': t - 6 * 3_600_000,
+    'dev-t-05': t - 5 * 3_600_000,
+    'dev-t-06': t - 4 * 3_600_000 - 30 * 60_000,
+    'dev-t-07': t - 4 * 3_600_000,
+    'dev-t-08': t - 3 * 3_600_000,
+    'dev-t-09': t - 2 * 3_600_000,
+    'dev-t-10': t - 30 * 60_000,
   };
   const byAccount = { 'dev-1': [], 'dev-2': [] };
   for (const [accountId, ids] of Object.entries(ACCOUNT_MESSAGES)) {

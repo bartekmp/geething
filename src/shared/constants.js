@@ -41,6 +41,7 @@ export const DEFAULT_SETTINGS = Object.freeze({
   autoMarkReadOnOpen: true,
   markReadBehavior: 'remove', // 'remove' | 'dim'
   keyboardShortcutsEnabled: true,
+  groupThreads: true,
   popupWidth: 560,
   popupHeight: 600,
 });

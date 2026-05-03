@@ -126,6 +126,31 @@ export async function unstarMessage(accessToken, messageId) {
   });
 }
 
+export async function archiveThread(accessToken, threadId) {
+  return gmailFetch(accessToken, `/users/me/threads/${threadId}/modify`, {
+    method: 'POST',
+    body: { removeLabelIds: ['INBOX'] },
+  });
+}
+
+export async function trashThread(accessToken, threadId) {
+  return gmailFetch(accessToken, `/users/me/threads/${threadId}/trash`, { method: 'POST' });
+}
+
+export async function spamThread(accessToken, threadId) {
+  return gmailFetch(accessToken, `/users/me/threads/${threadId}/modify`, {
+    method: 'POST',
+    body: { addLabelIds: ['SPAM'], removeLabelIds: ['INBOX'] },
+  });
+}
+
+export async function markThreadRead(accessToken, threadId) {
+  return gmailFetch(accessToken, `/users/me/threads/${threadId}/modify`, {
+    method: 'POST',
+    body: { removeLabelIds: ['UNREAD'] },
+  });
+}
+
 export async function getProfile(accessToken) {
   return gmailFetch(accessToken, '/users/me/profile');
 }
