@@ -1,5 +1,6 @@
 import { MAX_CUSTOM_SOUND_BYTES, MAX_CUSTOM_SOUND_SECONDS } from '../shared/constants.js';
 import { els, sendMessage, showStatus, state } from './state.js';
+import { formatFileSize } from '../shared/utils.js';
 
 // Injected via initSoundUi() to break the circular dependency with options.js entry point.
 let _saveSettings;
@@ -8,15 +9,7 @@ export function initSoundUi({ saveSettings }) {
   _saveSettings = saveSettings;
 }
 
-export function formatFileSize(bytes) {
-  if (bytes >= 1024 * 1024) {
-    return `${(bytes / 1024 / 1024).toFixed(1)} MB`;
-  }
-  if (bytes >= 1024) {
-    return `${Math.round(bytes / 1024)} KB`;
-  }
-  return `${bytes} B`;
-}
+export { formatFileSize };
 
 export function refreshSoundUi() {
   const s = state.settings;

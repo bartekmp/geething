@@ -139,7 +139,7 @@ function setupDragSort(list) {
   }
 }
 
-async function renderAccountRow(account) {
+function buildAccountControls(account) {
   const row = document.createElement('div');
   row.className = 'account-row';
 
@@ -245,7 +245,10 @@ async function renderAccountRow(account) {
   muteLabel.append(muteInput, muteText);
 
   row.append(handle, swatchWrap, labelInput, email, muteLabel, removeBtn);
+  return row;
+}
 
+async function buildLabelsSection(account) {
   const labelsRow = document.createElement('div');
   labelsRow.className = 'account-labels-row';
   const labelsCaption = document.createElement('span');
@@ -326,6 +329,12 @@ async function renderAccountRow(account) {
     }
   }
 
+  return labelsRow;
+}
+
+async function renderAccountRow(account) {
+  const row = buildAccountControls(account);
+  const labelsRow = await buildLabelsSection(account);
   const wrap = document.createElement('div');
   wrap.className = 'account-row-wrap';
   wrap.dataset.accountId = account.id;

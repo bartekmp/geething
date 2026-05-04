@@ -1,4 +1,4 @@
-import { ACCOUNT_COLORS } from '../shared/constants.js';
+import { ACCOUNT_COLORS, TOKEN_SKEW_MS } from '../shared/constants.js';
 import {
   clearAccountData,
   getAccounts as readAccounts,
@@ -7,8 +7,6 @@ import {
   saveTokens,
 } from '../shared/storage.js';
 import { launchOAuth, refreshAccessToken, revokeToken } from './auth.js';
-
-const TOKEN_SKEW_MS = 60 * 1000; // Refresh 60s before expiry.
 
 export class AuthError extends Error {
   constructor(message) {

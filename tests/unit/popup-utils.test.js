@@ -54,11 +54,11 @@ describe('formatFileSize', () => {
   });
 
   it('formats K when < 1 MB', () => {
-    expect(formatFileSize(2048)).toBe('2K');
+    expect(formatFileSize(2048)).toBe('2 KB');
   });
 
   it('formats M when >= 1 MB', () => {
-    expect(formatFileSize(1_048_576)).toBe('1.0M');
+    expect(formatFileSize(1_048_576)).toBe('1.0 MB');
   });
 
   it('handles 0 bytes', () => {
