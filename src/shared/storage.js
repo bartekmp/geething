@@ -1,4 +1,4 @@
-import { DEFAULT_SETTINGS, STORAGE_KEYS } from './constants.js';
+import { DEFAULT_SETTINGS, MAX_SEEN_MESSAGES, STORAGE_KEYS } from './constants.js';
 
 const api = typeof browser !== 'undefined' ? browser : globalThis.chrome;
 
@@ -61,8 +61,8 @@ export async function getSeenMessages(accountId) {
 export async function saveSeenMessages(accountId, seenSet) {
   const result = await localArea().get(STORAGE_KEYS.SEEN_MESSAGES);
   const bucket = result[STORAGE_KEYS.SEEN_MESSAGES] || {};
-  // Cap at 500 entries per account to avoid unbounded growth.
-  const arr = Array.from(seenSet).slice(-500);
+  // Cap to avoid unbounded growth.
+  const arr = Array.from(seenSet).slice(-MAX_SEEN_MESSAGES);
   bucket[accountId] = arr;
   await localArea().set({ [STORAGE_KEYS.SEEN_MESSAGES]: bucket });
 }
