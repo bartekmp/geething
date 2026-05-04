@@ -1,5 +1,11 @@
 import { describe, expect, it } from 'vitest';
-import { clearBadge, formatBadgeText, updateBadge } from '../../src/background/badge.js';
+import {
+  clearBadge,
+  formatBadgeText,
+  showAuthErrorBadge,
+  showMutedBadge,
+  updateBadge,
+} from '../../src/background/badge.js';
 
 describe('badge / formatBadgeText', () => {
   it('returns empty string for 0 or undefined', () => {
@@ -29,5 +35,28 @@ describe('badge / updateBadge', () => {
   it('clears badge via clearBadge', async () => {
     await clearBadge();
     expect(browser.action.setBadgeText).toHaveBeenCalledWith({ text: '' });
+  });
+});
+
+describe('badge / showMutedBadge', () => {
+  it('shows unread count in gray when there are unreads', async () => {
+    await showMutedBadge(3);
+    expect(browser.action.setBadgeText).toHaveBeenCalledWith({ text: '3' });
+    expect(browser.action.setBadgeBackgroundColor).toHaveBeenCalledWith({ color: '#5f6368' });
+  });
+
+  it('shows Z when there are no unreads', async () => {
+    await showMutedBadge(0);
+    expect(browser.action.setBadgeText).toHaveBeenCalledWith({ text: 'Z' });
+    expect(browser.action.setBadgeBackgroundColor).toHaveBeenCalledWith({ color: '#5f6368' });
+  });
+});
+
+describe('badge / showAuthErrorBadge', () => {
+  it('shows ! in amber', async () => {
+    await showAuthErrorBadge();
+    expect(browser.action.setBadgeText).toHaveBeenCalledWith({ text: '!' });
+    expect(browser.action.setBadgeBackgroundColor).toHaveBeenCalledWith({ color: '#e37400' });
+    expect(browser.action.setBadgeTextColor).toHaveBeenCalledWith({ color: '#ffffff' });
   });
 });

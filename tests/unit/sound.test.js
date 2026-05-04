@@ -86,6 +86,7 @@ describe('playNotificationSound', () => {
 
   it('does not throw when audio.play() rejects', async () => {
     AudioSpy.mockImplementation(() => makeAudioMock(Promise.reject(new Error('blocked'))));
+    const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
     await expect(
       playNotificationSound({
         notificationSoundEnabled: true,
@@ -93,5 +94,7 @@ describe('playNotificationSound', () => {
         notificationSoundVolume: 0.7,
       }),
     ).resolves.toBeUndefined();
+    expect(warnSpy).toHaveBeenCalledWith('[geething] sound playback failed:', 'Error');
+    warnSpy.mockRestore();
   });
 });
