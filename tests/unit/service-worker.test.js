@@ -32,6 +32,9 @@ vi.mock('../../src/background/gmail-api.js', () => ({
   fetchMessageDetail: vi.fn(),
   fetchAttachment: vi.fn(),
   fetchLabels: vi.fn(),
+}));
+
+vi.mock('../../src/background/gmail-actions.js', () => ({
   markAsRead: vi.fn(),
   markAsUnread: vi.fn(),
   archiveMessage: vi.fn(),
@@ -39,6 +42,10 @@ vi.mock('../../src/background/gmail-api.js', () => ({
   moveToTrash: vi.fn(),
   starMessage: vi.fn(),
   unstarMessage: vi.fn(),
+  archiveThread: vi.fn(),
+  trashThread: vi.fn(),
+  spamThread: vi.fn(),
+  markThreadRead: vi.fn(),
 }));
 
 vi.mock('../../src/background/notifications.js', () => ({
@@ -89,6 +96,8 @@ import {
   fetchMessageDetail,
   fetchAttachment,
   fetchLabels,
+} from '../../src/background/gmail-api.js';
+import {
   markAsRead,
   markAsUnread,
   archiveMessage,
@@ -96,7 +105,7 @@ import {
   moveToTrash,
   starMessage,
   unstarMessage,
-} from '../../src/background/gmail-api.js';
+} from '../../src/background/gmail-actions.js';
 import {
   showNewMailNotification,
   showGroupedMailNotification,

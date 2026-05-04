@@ -67,3 +67,6 @@ export const MAX_EMAIL_SIZE_BYTES = 5 * 1024 * 1024; // 5 MB
 export const MAX_CUSTOM_SOUND_BYTES = 500 * 1024; // 500 KB
 export const MAX_CUSTOM_SOUND_SECONDS = 5;
 export const DEFAULT_SOUND_PATH = 'sounds/default.wav';
+export const MAX_SEEN_MESSAGES = 500;
+export const POLL_GUARD_TIMEOUT_MS = 5 * 60 * 1000;
+export const TOKEN_SKEW_MS = 60 * 1000; // Refresh 60s before expiry.

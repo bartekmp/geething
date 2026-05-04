@@ -1,5 +1,6 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import {
+  registerNotificationButtonHandler,
   registerNotificationClickHandler,
   showGroupedMailNotification,
   showNewMailNotification,
@@ -141,5 +142,51 @@ describe('notifications / click handler', () => {
   it('subscribes to onClicked', () => {
     registerNotificationClickHandler(() => {});
     expect(browser.notifications.onClicked.addListener).toHaveBeenCalled();
+  });
+});
+
+describe('notifications / button handler', () => {
+  it('subscribes to onButtonClicked', () => {
+    registerNotificationButtonHandler(() => {});
+    expect(browser.notifications.onButtonClicked.addListener).toHaveBeenCalled();
+  });
+
+  it('calls handler with markRead action for button 0', async () => {
+    const handler = vi.fn().mockResolvedValue(undefined);
+    registerNotificationButtonHandler(handler);
+
+    const listener = browser.notifications.onButtonClicked.addListener.mock.calls[0][0];
+    await listener('geething:acc1|msg1', 0);
+
+    expect(handler).toHaveBeenCalledWith({
+      accountId: 'acc1',
+      messageId: 'msg1',
+      action: 'markRead',
+    });
+    expect(browser.notifications.clear).toHaveBeenCalledWith('geething:acc1|msg1');
+  });
+
+  it('calls handler with archive action for button 1', async () => {
+    const handler = vi.fn().mockResolvedValue(undefined);
+    registerNotificationButtonHandler(handler);
+
+    const listener = browser.notifications.onButtonClicked.addListener.mock.calls[0][0];
+    await listener('geething:acc1|msg2', 1);
+
+    expect(handler).toHaveBeenCalledWith({
+      accountId: 'acc1',
+      messageId: 'msg2',
+      action: 'archive',
+    });
+  });
+
+  it('ignores notifications not belonging to geething', async () => {
+    const handler = vi.fn();
+    registerNotificationButtonHandler(handler);
+
+    const listener = browser.notifications.onButtonClicked.addListener.mock.calls[0][0];
+    await listener('some-other-extension:notif', 0);
+
+    expect(handler).not.toHaveBeenCalled();
   });
 });

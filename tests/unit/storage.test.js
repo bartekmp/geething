@@ -1,13 +1,16 @@
 import { describe, expect, it } from 'vitest';
 import {
   clearAccountData,
+  clearCustomSound,
   deleteTokens,
   getAccounts,
+  getCustomSound,
   getPersistedAccountState,
   getSeenMessages,
   getSettings,
   getTokens,
   saveAccounts,
+  saveCustomSound,
   savePersistedAccountState,
   saveSeenMessages,
   saveSettings,
@@ -89,5 +92,27 @@ describe('storage', () => {
     expect(await getTokens('a1')).toBeNull();
     expect((await getSeenMessages('a1')).size).toBe(0);
     expect(await getTokens('a2')).toEqual({ accessToken: 'y' });
+  });
+
+  it('getSeenMessages returns empty Set when nothing stored', async () => {
+    const result = await getSeenMessages('unknown-account');
+    expect(result).toBeInstanceOf(Set);
+    expect(result.size).toBe(0);
+  });
+
+  it('saveCustomSound and getCustomSound round-trip correctly', async () => {
+    const payload = { name: 'ding.mp3', duration: 2.1, dataUrl: 'data:audio/mpeg;base64,abc' };
+    await saveCustomSound(payload);
+    expect(await getCustomSound()).toEqual(payload);
+  });
+
+  it('getCustomSound returns null when nothing stored', async () => {
+    expect(await getCustomSound()).toBeNull();
+  });
+
+  it('clearCustomSound removes the stored sound', async () => {
+    await saveCustomSound({ name: 'ding.mp3', duration: 1 });
+    await clearCustomSound();
+    expect(await getCustomSound()).toBeNull();
   });
 });

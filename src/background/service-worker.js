@@ -1,4 +1,5 @@
-import { ALARM_NAMES, MAX_FETCH_MESSAGES } from '../shared/constants.js';
+import { ALARM_NAMES, MAX_FETCH_MESSAGES, POLL_GUARD_TIMEOUT_MS } from '../shared/constants.js';
+import { isGloballyMuted } from '../shared/mute.js';
 import { DEV_MESSAGE_DETAILS, seedDevData } from './dev-seed.js';
 import {
   clearCustomSound,
@@ -33,20 +34,22 @@ import {
 import {
   archiveMessage,
   archiveThread,
-  spamThread,
-  fetchAttachment,
-  fetchLabels,
-  fetchMessageDetail,
-  fetchMessageMetadata,
-  fetchUnreadMessageIds,
   markAsRead,
   markAsSpam,
   markAsUnread,
   markThreadRead,
   moveToTrash,
+  spamThread,
   starMessage,
   trashThread,
   unstarMessage,
+} from './gmail-actions.js';
+import {
+  fetchAttachment,
+  fetchLabels,
+  fetchMessageDetail,
+  fetchMessageMetadata,
+  fetchUnreadMessageIds,
 } from './gmail-api.js';
 
 const api = typeof browser !== 'undefined' ? browser : globalThis.chrome;
@@ -57,7 +60,6 @@ const accountState = new Map();
 // Guard against concurrent polls that would cause duplicate notifications.
 // A safety timer releases the lock if a poll hangs beyond POLL_GUARD_TIMEOUT_MS
 // so a single stuck fetch cannot freeze the extension indefinitely.
-const POLL_GUARD_TIMEOUT_MS = 5 * 60 * 1000;
 let pollRunning = false;
 let pollGuardTimer = null;
 
@@ -66,19 +68,6 @@ function setAccountState(accountId, patch) {
   const next = { ...prev, ...patch };
   accountState.set(accountId, next);
   return next;
-}
-
-function isGloballyMuted(mute) {
-  if (!mute) {
-    return false;
-  }
-  if (mute.muteUntil === -1) {
-    return true;
-  }
-  if (!mute.muteUntil) {
-    return false;
-  }
-  return Date.now() < mute.muteUntil;
 }
 
 // Updates the badge to the total unread count, or to '!' (amber) if any

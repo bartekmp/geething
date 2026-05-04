@@ -10,7 +10,7 @@ class HttpError extends Error {
 
 export { HttpError };
 
-async function gmailFetch(accessToken, path, { method = 'GET', body, query } = {}) {
+export async function gmailFetch(accessToken, path, { method = 'GET', body, query } = {}) {
   const url = new URL(`${GMAIL_API_BASE}${path}`);
   if (query) {
     for (const [key, value] of Object.entries(query)) {
@@ -78,77 +78,6 @@ export async function fetchMessageDetail(accessToken, messageId) {
     throw new Error(`Email is too large to display (${mb} MB).`);
   }
   return parseMessage(data, { includeBody: true });
-}
-
-export async function markAsRead(accessToken, messageId) {
-  return gmailFetch(accessToken, `/users/me/messages/${messageId}/modify`, {
-    method: 'POST',
-    body: { removeLabelIds: ['UNREAD'] },
-  });
-}
-
-export async function markAsUnread(accessToken, messageId) {
-  return gmailFetch(accessToken, `/users/me/messages/${messageId}/modify`, {
-    method: 'POST',
-    body: { addLabelIds: ['UNREAD'] },
-  });
-}
-
-export async function moveToTrash(accessToken, messageId) {
-  return gmailFetch(accessToken, `/users/me/messages/${messageId}/trash`, { method: 'POST' });
-}
-
-export async function markAsSpam(accessToken, messageId) {
-  return gmailFetch(accessToken, `/users/me/messages/${messageId}/modify`, {
-    method: 'POST',
-    body: { addLabelIds: ['SPAM'], removeLabelIds: ['INBOX'] },
-  });
-}
-
-export async function archiveMessage(accessToken, messageId) {
-  return gmailFetch(accessToken, `/users/me/messages/${messageId}/modify`, {
-    method: 'POST',
-    body: { removeLabelIds: ['INBOX'] },
-  });
-}
-
-export async function starMessage(accessToken, messageId) {
-  return gmailFetch(accessToken, `/users/me/messages/${messageId}/modify`, {
-    method: 'POST',
-    body: { addLabelIds: ['STARRED'] },
-  });
-}
-
-export async function unstarMessage(accessToken, messageId) {
-  return gmailFetch(accessToken, `/users/me/messages/${messageId}/modify`, {
-    method: 'POST',
-    body: { removeLabelIds: ['STARRED'] },
-  });
-}
-
-export async function archiveThread(accessToken, threadId) {
-  return gmailFetch(accessToken, `/users/me/threads/${threadId}/modify`, {
-    method: 'POST',
-    body: { removeLabelIds: ['INBOX'] },
-  });
-}
-
-export async function trashThread(accessToken, threadId) {
-  return gmailFetch(accessToken, `/users/me/threads/${threadId}/trash`, { method: 'POST' });
-}
-
-export async function spamThread(accessToken, threadId) {
-  return gmailFetch(accessToken, `/users/me/threads/${threadId}/modify`, {
-    method: 'POST',
-    body: { addLabelIds: ['SPAM'], removeLabelIds: ['INBOX'] },
-  });
-}
-
-export async function markThreadRead(accessToken, threadId) {
-  return gmailFetch(accessToken, `/users/me/threads/${threadId}/modify`, {
-    method: 'POST',
-    body: { removeLabelIds: ['UNREAD'] },
-  });
 }
 
 export async function getProfile(accessToken) {
