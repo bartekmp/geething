@@ -158,6 +158,31 @@ async function handleMessage(msg) {
       await clearCustomSound();
       return { ok: true };
     }
+    case 'geething.getLabels': {
+      return [
+        { id: 'INBOX', name: 'Inbox' },
+        { id: 'STARRED', name: 'Starred' },
+        { id: 'IMPORTANT', name: 'Important' },
+        { id: 'SENT', name: 'Sent' },
+        { id: 'DRAFT', name: 'Drafts' },
+        { id: 'SPAM', name: 'Spam' },
+        { id: 'TRASH', name: 'Trash' },
+      ];
+    }
+    case 'geething.updateAccount': {
+      const idx = devAccounts.findIndex((a) => a.id === msg.accountId);
+      if (idx !== -1) {
+        devAccounts[idx] = { ...devAccounts[idx], ...msg.patch };
+        await saveAccounts(devAccounts);
+      }
+      return { account: devAccounts[idx] };
+    }
+    case 'geething.removeAccount': {
+      devAccounts = devAccounts.filter((a) => a.id !== msg.accountId);
+      accountState.delete(msg.accountId);
+      await saveAccounts(devAccounts);
+      return { ok: true, revokeWarning: null };
+    }
     default:
       return undefined;
   }

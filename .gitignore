@@ -20,6 +20,7 @@ src/shared/credentials.js
 .claude/
 *.swp
 *.swo
+geething.code-workspace
 
 # OS
 .DS_Store

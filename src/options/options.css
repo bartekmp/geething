@@ -396,6 +396,22 @@ input[type='checkbox'] {
   color: var(--text-secondary);
 }
 
+.mute-controls {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.mute-status-active {
+  color: #b07d00;
+  font-size: 13px;
+  font-weight: 500;
+}
+
+:root.theme-dark .mute-status-active {
+  color: #f4c25e;
+}
+
 .mute-toggle {
   display: flex;
   align-items: center;
@@ -515,5 +531,9 @@ a:hover {
     --accent: #6ba6ff;
     --danger: #ff7070;
     color-scheme: dark;
+  }
+
+  html:not(.theme-light) .mute-status-active {
+    color: #f4c25e;
   }
 }

@@ -56,6 +56,7 @@ vi.mock('../../src/background/badge.js', () => ({
   updateBadge: vi.fn(),
   clearBadge: vi.fn(),
   showAuthErrorBadge: vi.fn(),
+  showMutedBadge: vi.fn(),
 }));
 
 vi.mock('../../src/shared/storage.js', () => ({
@@ -69,6 +70,9 @@ vi.mock('../../src/shared/storage.js', () => ({
   savePkceState: vi.fn(),
   loadPkceState: vi.fn().mockResolvedValue(null),
   clearPkceState: vi.fn(),
+  getGlobalMute: vi.fn().mockResolvedValue(null),
+  saveGlobalMute: vi.fn(),
+  clearGlobalMute: vi.fn(),
 }));
 
 import {

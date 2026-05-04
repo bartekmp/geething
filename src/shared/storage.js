@@ -102,6 +102,19 @@ export async function clearPkceState() {
   await localArea().remove(STORAGE_KEYS.PKCE_STATE);
 }
 
+export async function getGlobalMute() {
+  const result = await localArea().get(STORAGE_KEYS.GLOBAL_MUTE);
+  return result[STORAGE_KEYS.GLOBAL_MUTE] || null;
+}
+
+export async function saveGlobalMute(muteUntil) {
+  await localArea().set({ [STORAGE_KEYS.GLOBAL_MUTE]: { muteUntil } });
+}
+
+export async function clearGlobalMute() {
+  await localArea().remove(STORAGE_KEYS.GLOBAL_MUTE);
+}
+
 export async function clearAccountData(accountId) {
   await deleteTokens(accountId);
   const result = await localArea().get(STORAGE_KEYS.SEEN_MESSAGES);
