@@ -34,20 +34,22 @@ import {
 import {
   archiveMessage,
   archiveThread,
-  spamThread,
-  fetchAttachment,
-  fetchLabels,
-  fetchMessageDetail,
-  fetchMessageMetadata,
-  fetchUnreadMessageIds,
   markAsRead,
   markAsSpam,
   markAsUnread,
   markThreadRead,
   moveToTrash,
+  spamThread,
   starMessage,
   trashThread,
   unstarMessage,
+} from './gmail-actions.js';
+import {
+  fetchAttachment,
+  fetchLabels,
+  fetchMessageDetail,
+  fetchMessageMetadata,
+  fetchUnreadMessageIds,
 } from './gmail-api.js';
 
 const api = typeof browser !== 'undefined' ? browser : globalThis.chrome;

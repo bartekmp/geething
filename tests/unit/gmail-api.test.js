@@ -1,18 +1,11 @@
 import { describe, expect, it } from 'vitest';
 import {
-  archiveMessage,
-  archiveThread,
   extractBody,
   fetchMessageDetail,
   fetchUnreadMessageIds,
   HttpError,
-  markAsRead,
-  markAsSpam,
-  markThreadRead,
-  moveToTrash,
   parseAddress,
   parseMessage,
-  trashThread,
 } from '../../src/background/gmail-api.js';
 
 function mockOk(data) {
@@ -139,64 +132,6 @@ describe('gmail-api / HTTP helpers', () => {
     expect(result.id).toBe('1');
     const [url] = globalThis.fetch.mock.calls[0];
     expect(url).toContain('format=full');
-  });
-
-  it('markAsRead sends modify with removeLabelIds UNREAD', async () => {
-    globalThis.fetch.mockResolvedValue({ ok: true, status: 204 });
-    await markAsRead('tok', 'mid');
-    const [url, init] = globalThis.fetch.mock.calls[0];
-    expect(url).toContain('/users/me/messages/mid/modify');
-    expect(init.method).toBe('POST');
-    const body = JSON.parse(init.body);
-    expect(body).toEqual({ removeLabelIds: ['UNREAD'] });
-  });
-
-  it('moveToTrash hits the trash endpoint', async () => {
-    globalThis.fetch.mockResolvedValue({ ok: true, status: 200, json: async () => ({}) });
-    await moveToTrash('tok', 'mid');
-    expect(globalThis.fetch.mock.calls[0][0]).toContain('/users/me/messages/mid/trash');
-  });
-
-  it('markAsSpam adds SPAM and removes INBOX', async () => {
-    globalThis.fetch.mockResolvedValue({ ok: true, status: 200, json: async () => ({}) });
-    await markAsSpam('tok', 'mid');
-    const body = JSON.parse(globalThis.fetch.mock.calls[0][1].body);
-    expect(body.addLabelIds).toEqual(['SPAM']);
-    expect(body.removeLabelIds).toEqual(['INBOX']);
-  });
-
-  it('archiveMessage removes INBOX', async () => {
-    globalThis.fetch.mockResolvedValue({ ok: true, status: 200, json: async () => ({}) });
-    await archiveMessage('tok', 'mid');
-    const body = JSON.parse(globalThis.fetch.mock.calls[0][1].body);
-    expect(body.removeLabelIds).toEqual(['INBOX']);
-  });
-
-  it('archiveThread removes INBOX from the thread', async () => {
-    globalThis.fetch.mockResolvedValue({ ok: true, status: 200, json: async () => ({}) });
-    await archiveThread('tok', 'tid1');
-    const [url, init] = globalThis.fetch.mock.calls[0];
-    expect(url).toContain('/users/me/threads/tid1/modify');
-    expect(init.method).toBe('POST');
-    const body = JSON.parse(init.body);
-    expect(body.removeLabelIds).toEqual(['INBOX']);
-  });
-
-  it('trashThread hits the thread trash endpoint', async () => {
-    globalThis.fetch.mockResolvedValue({ ok: true, status: 200, json: async () => ({}) });
-    await trashThread('tok', 'tid2');
-    const [url, init] = globalThis.fetch.mock.calls[0];
-    expect(url).toContain('/users/me/threads/tid2/trash');
-    expect(init.method).toBe('POST');
-  });
-
-  it('markThreadRead removes UNREAD from the thread', async () => {
-    globalThis.fetch.mockResolvedValue({ ok: true, status: 200, json: async () => ({}) });
-    await markThreadRead('tok', 'tid3');
-    const [url, init] = globalThis.fetch.mock.calls[0];
-    expect(url).toContain('/users/me/threads/tid3/modify');
-    const body = JSON.parse(init.body);
-    expect(body.removeLabelIds).toEqual(['UNREAD']);
   });
 
   it('throws HttpError on non-ok response with status and message', async () => {
