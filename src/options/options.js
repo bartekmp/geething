@@ -4,6 +4,7 @@ import {
   MAX_CUSTOM_SOUND_BYTES,
   MAX_CUSTOM_SOUND_SECONDS,
 } from '../shared/constants.js';
+import { isGloballyMuted, MUTE_OPTIONS } from '../shared/mute.js';
 import { applyTheme, watchSystemTheme } from '../shared/theme.js';
 
 const api = typeof browser !== 'undefined' ? browser : globalThis.chrome;
@@ -42,6 +43,7 @@ const els = {
   popupWidthValue: document.getElementById('popupWidthValue'),
   popupHeight: document.getElementById('popupHeight'),
   popupHeightValue: document.getElementById('popupHeightValue'),
+  globalMuteRow: document.getElementById('global-mute-row'),
   saveIndicator: document.getElementById('save-indicator'),
   version: document.getElementById('version'),
   changelogLink: document.getElementById('changelog-link'),
@@ -78,14 +80,79 @@ function sendMessage(payload) {
   });
 }
 
-const state = { accounts: [], settings: { ...DEFAULT_SETTINGS } };
+const state = { accounts: [], settings: { ...DEFAULT_SETTINGS }, globalMute: null };
+
+function renderGlobalMuteRow() {
+  clearNode(els.globalMuteRow);
+  const muted = isGloballyMuted(state.globalMute);
+
+  const labelSpan = document.createElement('span');
+
+  if (muted) {
+    const { muteUntil } = state.globalMute;
+    if (muteUntil === -1) {
+      labelSpan.textContent = 'Notifications paused indefinitely';
+    } else {
+      const timeStr = new Date(muteUntil).toLocaleTimeString(undefined, {
+        hour: 'numeric',
+        minute: '2-digit',
+      });
+      labelSpan.textContent = `Notifications paused until ${timeStr}`;
+    }
+    labelSpan.className = 'mute-status-active';
+
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'btn btn-ghost';
+    btn.textContent = 'Turn off';
+    btn.addEventListener('click', async () => {
+      btn.disabled = true;
+      await sendMessage({ type: 'geething.clearGlobalMute' });
+      state.globalMute = null;
+      renderGlobalMuteRow();
+      flashSaved();
+    });
+    els.globalMuteRow.append(labelSpan, btn);
+  } else {
+    labelSpan.textContent = 'Pause all notifications';
+
+    const controls = document.createElement('span');
+    controls.className = 'mute-controls';
+
+    const select = document.createElement('select');
+    for (const opt of MUTE_OPTIONS) {
+      const option = document.createElement('option');
+      option.value = String(opt.duration);
+      option.textContent = opt.label;
+      select.appendChild(option);
+    }
+
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'btn btn-ghost';
+    btn.textContent = 'Pause';
+    btn.addEventListener('click', async () => {
+      btn.disabled = true;
+      const duration = Number(select.value);
+      await sendMessage({ type: 'geething.setGlobalMute', duration });
+      state.globalMute = { muteUntil: duration === -1 ? -1 : Date.now() + duration };
+      renderGlobalMuteRow();
+      flashSaved();
+    });
+
+    controls.append(select, btn);
+    els.globalMuteRow.append(labelSpan, controls);
+  }
+}
 
 async function loadState() {
   const result = await sendMessage({ type: 'geething.getState' });
   state.accounts = result.accounts || [];
   state.settings = { ...DEFAULT_SETTINGS, ...(result.settings || {}) };
+  state.globalMute = result.globalMute || null;
   populateForm();
   renderAccounts();
+  renderGlobalMuteRow();
   applyTheme(state.settings.theme || 'auto');
 }
 
@@ -411,15 +478,17 @@ async function renderAccountRow(account) {
 
   const currentLabels = account.watchedLabels?.length ? account.watchedLabels : ['INBOX'];
 
+  const FALLBACK_LABELS = [
+    { id: 'INBOX', name: 'Inbox' },
+    { id: 'STARRED', name: 'Starred' },
+    { id: 'IMPORTANT', name: 'Important' },
+  ];
   let availableLabels;
   try {
-    availableLabels = await sendMessage({ type: 'geething.getLabels', accountId: account.id });
+    const result = await sendMessage({ type: 'geething.getLabels', accountId: account.id });
+    availableLabels = Array.isArray(result) ? result : FALLBACK_LABELS;
   } catch {
-    availableLabels = [
-      { id: 'INBOX', name: 'Inbox' },
-      { id: 'STARRED', name: 'Starred' },
-      { id: 'IMPORTANT', name: 'Important' },
-    ];
+    availableLabels = FALLBACK_LABELS;
   }
 
   function addLabelChip(labelId, labelName) {
@@ -704,6 +773,17 @@ els.addAccount.addEventListener('click', async () => {
 watchSystemTheme(() => {
   if (state.settings?.theme === 'auto') {
     applyTheme('auto');
+  }
+});
+
+api.runtime.onMessage.addListener((msg) => {
+  if (msg?.type === 'geething.muteChanged') {
+    sendMessage({ type: 'geething.getState' })
+      .then((result) => {
+        state.globalMute = result.globalMute || null;
+        renderGlobalMuteRow();
+      })
+      .catch(() => {});
   }
 });
 

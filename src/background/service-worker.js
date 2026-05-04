@@ -1,11 +1,14 @@
 import { ALARM_NAMES, MAX_FETCH_MESSAGES } from '../shared/constants.js';
-import { DEV_MESSAGE_DETAILS } from './dev-seed.js';
+import { DEV_MESSAGE_DETAILS, seedDevData } from './dev-seed.js';
 import {
   clearCustomSound,
+  clearGlobalMute,
+  getGlobalMute,
   getPersistedAccountState,
   getSeenMessages,
   getSettings,
   saveCustomSound,
+  saveGlobalMute,
   savePersistedAccountState,
   saveSeenMessages,
 } from '../shared/storage.js';
@@ -20,7 +23,7 @@ import {
   reorderAccounts,
   updateAccount,
 } from './accounts.js';
-import { clearBadge, showAuthErrorBadge, updateBadge } from './badge.js';
+import { clearBadge, showAuthErrorBadge, showMutedBadge, updateBadge } from './badge.js';
 import {
   registerNotificationButtonHandler,
   registerNotificationClickHandler,
@@ -65,9 +68,28 @@ function setAccountState(accountId, patch) {
   return next;
 }
 
+function isGloballyMuted(mute) {
+  if (!mute) {
+    return false;
+  }
+  if (mute.muteUntil === -1) {
+    return true;
+  }
+  if (!mute.muteUntil) {
+    return false;
+  }
+  return Date.now() < mute.muteUntil;
+}
+
 // Updates the badge to the total unread count, or to '!' (amber) if any
 // account needs re-authorization and there are no unread messages.
+// When globally muted, the muted badge takes priority over everything.
 async function updateBadgeOrWarn(total) {
+  const mute = await getGlobalMute();
+  if (isGloballyMuted(mute)) {
+    await showMutedBadge(total);
+    return;
+  }
   if (total > 0) {
     await updateBadge(total);
     return;
@@ -80,7 +102,7 @@ async function updateBadgeOrWarn(total) {
   }
 }
 
-async function pollAccount(account, { isInitial = false } = {}) {
+async function pollAccount(account, { isInitial = false, globalMute = null } = {}) {
   try {
     const token = await getValidAccessToken(account.id);
     const labels = account.watchedLabels?.length ? account.watchedLabels : ['INBOX'];
@@ -112,7 +134,7 @@ async function pollAccount(account, { isInitial = false } = {}) {
     await saveSeenMessages(account.id, nextSeen);
 
     const settings = await getSettings();
-    if (!account.muted && newMessages.length > 0) {
+    if (!account.muted && !isGloballyMuted(globalMute) && newMessages.length > 0) {
       // Fire sound first, synchronously, so the Audio element keeps the event
       // page alive even if the notification step is slow or rejects.
       playNotificationSound(settings);
@@ -153,9 +175,10 @@ async function pollAllAccounts({ isInitial = false } = {}) {
   }, POLL_GUARD_TIMEOUT_MS);
   try {
     const accounts = await getAccounts();
+    const globalMute = await getGlobalMute();
     let total = 0;
     for (const account of accounts) {
-      const result = await pollAccount(account, { isInitial });
+      const result = await pollAccount(account, { isInitial, globalMute });
       total += result.count || 0;
     }
     // Remove stale entries for deleted accounts.
@@ -203,11 +226,12 @@ async function handleMessage(msg, _sender) {
     case 'geething.getState': {
       const accounts = await getAccounts();
       const settings = await getSettings();
+      const globalMute = await getGlobalMute();
       const perAccount = accounts.map((acc) => ({
         ...acc,
         ...(accountState.get(acc.id) || { unreadCount: 0, messages: [] }),
       }));
-      return { accounts: perAccount, settings };
+      return { accounts: perAccount, settings, globalMute };
     }
     case 'geething.refresh': {
       const total = await pollAllAccounts();
@@ -313,6 +337,36 @@ async function handleMessage(msg, _sender) {
     case 'geething.getLabels': {
       const token = await getValidAccessToken(msg.accountId);
       return fetchLabels(token);
+    }
+    case 'geething.setGlobalMute': {
+      const muteUntil = msg.duration === -1 ? -1 : Date.now() + msg.duration;
+      await saveGlobalMute(muteUntil);
+      await api.alarms.clear(ALARM_NAMES.MUTE_EXPIRY);
+      if (msg.duration !== -1) {
+        api.alarms.create(ALARM_NAMES.MUTE_EXPIRY, { delayInMinutes: msg.duration / 60000 });
+      }
+      const muteTotal = Array.from(accountState.values()).reduce(
+        (sum, s) => sum + (s.unreadCount || 0),
+        0,
+      );
+      await updateBadgeOrWarn(muteTotal);
+      api.runtime.sendMessage({ type: 'geething.muteChanged' })?.catch(() => {});
+      return { ok: true, muteUntil };
+    }
+    case 'geething.clearGlobalMute': {
+      await clearGlobalMute();
+      await api.alarms.clear(ALARM_NAMES.MUTE_EXPIRY);
+      const unmuteTotal = Array.from(accountState.values()).reduce(
+        (sum, s) => sum + (s.unreadCount || 0),
+        0,
+      );
+      await updateBadgeOrWarn(unmuteTotal);
+      api.runtime.sendMessage({ type: 'geething.muteChanged' })?.catch(() => {});
+      return { ok: true };
+    }
+    case 'geething.seed': {
+      await seedDevData(setAccountState);
+      return { ok: true };
     }
     case 'geething.settingsChanged': {
       await rescheduleAlarm();
@@ -460,6 +514,15 @@ function attachListeners() {
   api.alarms.onAlarm.addListener((alarm) => {
     if (alarm.name === ALARM_NAMES.POLL) {
       pollAllAccounts();
+    } else if (alarm.name === ALARM_NAMES.MUTE_EXPIRY) {
+      clearGlobalMute().then(() => {
+        const total = Array.from(accountState.values()).reduce(
+          (sum, s) => sum + (s.unreadCount || 0),
+          0,
+        );
+        updateBadgeOrWarn(total);
+        api.runtime.sendMessage({ type: 'geething.muteChanged' })?.catch(() => {});
+      });
     }
   });
 
@@ -519,13 +582,28 @@ export function __testing__() {
 // Kick off an initial poll shortly after worker boot.
 (async () => {
   try {
+    // Auto-seed dev data when running as a temporary extension (about:debugging)
+    // with no real accounts yet. Skips polling since dev accounts have no real tokens.
+    let devSeeded = false;
+    if (DEV_MESSAGE_DETAILS.size > 0) {
+      const selfInfo = await Promise.resolve(api.management?.getSelf?.()).catch(() => null);
+      if (selfInfo?.installType === 'temporary') {
+        const existing = await getAccounts();
+        if (existing.length === 0) {
+          await seedDevData(setAccountState);
+          devSeeded = true;
+        }
+      }
+    }
     // Restore last-known state so the popup responds before the first poll completes.
     const persisted = await getPersistedAccountState();
-    for (const [id, state] of Object.entries(persisted)) {
-      accountState.set(id, state);
+    for (const [id, st] of Object.entries(persisted)) {
+      accountState.set(id, st);
     }
     await rescheduleAlarm();
-    await pollAllAccounts();
+    if (!devSeeded) {
+      await pollAllAccounts();
+    }
   } catch (err) {
     console.warn('Initial poll failed:', err);
   }

@@ -20,10 +20,12 @@ export const STORAGE_KEYS = Object.freeze({
   ACCOUNT_STATE: 'accountState',
   CUSTOM_SOUND: 'customSound',
   PKCE_STATE: 'pkceState',
+  GLOBAL_MUTE: 'globalMute',
 });
 
 export const ALARM_NAMES = Object.freeze({
   POLL: 'geething.poll',
+  MUTE_EXPIRY: 'geething.muteExpiry',
 });
 
 export const DEFAULT_SETTINGS = Object.freeze({
