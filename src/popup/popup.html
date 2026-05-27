@@ -3,6 +3,14 @@
   <head>
     <meta charset="utf-8" />
     <title>Geething</title>
+    <script>
+      try {
+        const w = localStorage.getItem('popupWidth');
+        const h = localStorage.getItem('popupHeight');
+        if (w) document.documentElement.style.setProperty('--popup-width', w + 'px');
+        if (h) document.documentElement.style.setProperty('--popup-height', h + 'px');
+      } catch (e) {}
+    </script>
     <link rel="stylesheet" href="popup.css" />
   </head>
   <body>
@@ -116,6 +124,20 @@
         <span class="spinner" aria-hidden="true"></span>
         <span>Loading…</span>
       </div>
+      <nav id="pagination" class="pagination-bar" hidden aria-label="Email page navigation">
+        <button
+          id="pagination-prev"
+          type="button"
+          class="pagination-btn"
+          aria-label="Previous page"
+        >
+          &#8249;
+        </button>
+        <span id="pagination-info" class="pagination-info"></span>
+        <button id="pagination-next" type="button" class="pagination-btn" aria-label="Next page">
+          &#8250;
+        </button>
+      </nav>
     </main>
 
     <div id="bulk-bar" class="bulk-bar" hidden aria-live="polite">
@@ -131,16 +153,6 @@
         <button id="bulk-cancel-btn" type="button" class="bulk-action-btn">Cancel</button>
       </div>
     </div>
-
-    <nav id="pagination" class="pagination-bar" hidden aria-label="Email page navigation">
-      <button id="pagination-prev" type="button" class="pagination-btn" aria-label="Previous page">
-        &#8249;
-      </button>
-      <span id="pagination-info" class="pagination-info"></span>
-      <button id="pagination-next" type="button" class="pagination-btn" aria-label="Next page">
-        &#8250;
-      </button>
-    </nav>
 
     <section id="email-detail" class="email-detail" hidden aria-live="polite">
       <div class="detail-topbar">
