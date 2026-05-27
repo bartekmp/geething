@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Geething",
-  "version": "0.9.0",
+  "version": "0.9.1",
   "description": "Multi-account Gmail notifications, badge counter, and quick email actions in a toolbar popup.",
   "author": "Geething contributors",
   "homepage_url": "https://github.com/bartekmp/geething",
