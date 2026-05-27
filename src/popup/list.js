@@ -465,10 +465,11 @@ export function renderTabs() {
     const label = document.createElement('span');
     label.textContent = account.label || account.email;
 
+    const threadCount = getThreads(account.messages || []).length;
     const count = document.createElement('span');
     count.className = 'count';
-    count.hidden = !account.unreadCount;
-    count.textContent = String(account.unreadCount || 0);
+    count.hidden = !threadCount;
+    count.textContent = String(threadCount);
 
     tab.append(dot, label, count);
     tab.addEventListener('click', () => {

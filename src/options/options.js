@@ -5,6 +5,20 @@ import { initAccountsUi, renderAccounts } from './accounts-ui.js';
 import { initSoundUi, refreshSoundUi, registerSoundListeners } from './sound-ui.js';
 import { api, clearNode, els, flashSaved, sendMessage, showStatus, state } from './state.js';
 
+const POPUP_WIDTH_STEPS = [400, 500, 600, 700, 800];
+const POPUP_HEIGHT_STEPS = [400, 450, 500, 550, 600];
+
+function pxToStep(px, steps) {
+  return steps.reduce(
+    (best, s, i) => (Math.abs(s - px) < Math.abs(steps[best - 1] - px) ? i + 1 : best),
+    1,
+  );
+}
+
+function stepToPx(step, steps) {
+  return steps[Math.max(0, Math.min(steps.length - 1, step - 1))];
+}
+
 // ── Global mute row ────────────────────────────────────────────────────────
 
 function renderGlobalMuteRow() {
@@ -93,10 +107,11 @@ function populateForm() {
   els.keyboardShortcutsEnabled.checked = s.keyboardShortcutsEnabled !== false;
   els.shortcutsDetail.hidden = !els.keyboardShortcutsEnabled.checked;
   els.theme.value = s.theme || 'auto';
-  els.popupWidth.value = s.popupWidth || DEFAULT_SETTINGS.popupWidth;
-  els.popupWidthValue.value = els.popupWidth.value;
-  els.popupHeight.value = s.popupHeight || DEFAULT_SETTINGS.popupHeight;
-  els.popupHeightValue.value = els.popupHeight.value;
+  els.popupWidth.value = pxToStep(s.popupWidth || DEFAULT_SETTINGS.popupWidth, POPUP_WIDTH_STEPS);
+  els.popupHeight.value = pxToStep(
+    s.popupHeight || DEFAULT_SETTINGS.popupHeight,
+    POPUP_HEIGHT_STEPS,
+  );
   const manifest = api.runtime.getManifest();
   els.version.textContent = `v${manifest.version}`;
   const repoUrl = manifest.homepage_url || 'https://github.com/bartekmp/geething';
@@ -169,18 +184,20 @@ els.theme.addEventListener('change', async () => {
   await saveSettings({ theme: els.theme.value });
   applyTheme(els.theme.value);
 });
-els.popupWidth.addEventListener('input', () => {
-  els.popupWidthValue.value = els.popupWidth.value;
+els.popupWidth.addEventListener('change', () => {
+  const w = stepToPx(Number(els.popupWidth.value), POPUP_WIDTH_STEPS);
+  saveSettings({ popupWidth: w });
+  try {
+    localStorage.setItem('popupWidth', w);
+  } catch {}
 });
-els.popupWidth.addEventListener('change', () =>
-  saveSettings({ popupWidth: Number(els.popupWidth.value) }),
-);
-els.popupHeight.addEventListener('input', () => {
-  els.popupHeightValue.value = els.popupHeight.value;
+els.popupHeight.addEventListener('change', () => {
+  const h = stepToPx(Number(els.popupHeight.value), POPUP_HEIGHT_STEPS);
+  saveSettings({ popupHeight: h });
+  try {
+    localStorage.setItem('popupHeight', h);
+  } catch {}
 });
-els.popupHeight.addEventListener('change', () =>
-  saveSettings({ popupHeight: Number(els.popupHeight.value) }),
-);
 els.addAccount.addEventListener('click', async () => {
   els.addAccount.disabled = true;
   showStatus(null);

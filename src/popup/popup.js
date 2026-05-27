@@ -43,6 +43,10 @@ export async function loadState() {
   document.documentElement.style.setProperty('--popup-width', `${width}px`);
   const height = state.settings.popupHeight || 600;
   document.documentElement.style.setProperty('--popup-height', `${height}px`);
+  try {
+    localStorage.setItem('popupWidth', width);
+    localStorage.setItem('popupHeight', height);
+  } catch {}
   applyTheme(state.settings.theme || 'auto');
   renderTabs();
   renderList();

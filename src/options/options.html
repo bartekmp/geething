@@ -129,12 +129,22 @@
           </select>
         </label>
         <label class="row">
-          <span>Popup width: <output id="popupWidthValue">560</output> px</span>
-          <input id="popupWidth" type="range" min="400" max="800" step="20" />
+          <span>Popup width</span>
+          <div class="slider-wrap">
+            <div class="slider-dots" aria-hidden="true">
+              <span></span><span></span><span></span><span></span><span></span>
+            </div>
+            <input id="popupWidth" type="range" min="1" max="5" step="1" />
+          </div>
         </label>
         <label class="row">
-          <span>Popup height: <output id="popupHeightValue">600</output> px</span>
-          <input id="popupHeight" type="range" min="400" max="800" step="20" />
+          <span>Popup height</span>
+          <div class="slider-wrap">
+            <div class="slider-dots" aria-hidden="true">
+              <span></span><span></span><span></span><span></span><span></span>
+            </div>
+            <input id="popupHeight" type="range" min="1" max="5" step="1" />
+          </div>
         </label>
       </section>
 

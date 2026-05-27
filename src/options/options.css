@@ -107,6 +107,30 @@ input[type='range'] {
   width: 160px;
 }
 
+.slider-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  width: 160px;
+}
+
+.slider-wrap input[type='range'] {
+  width: 100%;
+}
+
+.slider-dots {
+  display: flex;
+  justify-content: space-between;
+  padding: 0 9px;
+}
+
+.slider-dots span {
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: var(--border);
+}
+
 input[type='number'] {
   width: 80px;
   padding: 4px 6px;
