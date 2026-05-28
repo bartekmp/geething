@@ -9,6 +9,7 @@ export const state = {
   selectedMessages: new Set(),
   expandedThreads: new Set(),
   globalMute: null,
+  searchQuery: '',
 };
 
 // Message IDs marked read in 'dim' mode — cleared on every loadState().
@@ -35,6 +36,10 @@ export const els = {
   selectBtn: document.getElementById('select-btn'),
   onboardingAddBtn: document.getElementById('onboarding-add-btn'),
   optionsBtn: document.getElementById('options-btn'),
+  searchBtn: document.getElementById('search-btn'),
+  searchBar: document.getElementById('search-bar'),
+  searchInput: document.getElementById('search-input'),
+  searchClearBtn: document.getElementById('search-clear-btn'),
   pagination: document.getElementById('pagination'),
   paginationPrev: document.getElementById('pagination-prev'),
   paginationNext: document.getElementById('pagination-next'),

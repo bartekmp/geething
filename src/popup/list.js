@@ -1,8 +1,10 @@
 import { groupByThread } from './thread-utils.js';
+import { filterMessages } from './search.js';
 import { openInGmail, openReply, performAction, performThreadAction } from './actions.js';
 import { ICONS, makeIconBtn, makeMarkReadToggleBtn, makeStarBtn, makeSvgIcon } from './icons.js';
 import { openDetail } from './detail.js';
 import { api, dimmedMessages, els, state } from './state.js';
+import { resetSearch, updateSearchBtn } from './search-ui.js';
 import { clearNode, formatRelativeTime, sendMessage, setLoading, showError } from './utils.js';
 
 // Injected by popup.js via initList() to avoid a circular dependency.
@@ -475,6 +477,7 @@ export function renderTabs() {
     tab.addEventListener('click', () => {
       state.activeAccountId = account.id;
       state.pageByAccount[account.id] = 0;
+      resetSearch();
       if (state.selectionMode) {
         state.selectedMessages.clear();
         updateBulkBar();
@@ -486,6 +489,7 @@ export function renderTabs() {
       updateGmailBtn();
       updateMarkAllBtn();
       updateSelectBtn();
+      updateSearchBtn();
     });
     els.tabs.appendChild(tab);
   }
@@ -586,7 +590,7 @@ export function renderList() {
   } else {
     showError(null);
   }
-  const messages = account.messages || [];
+  const messages = filterMessages(account.messages || [], state.searchQuery);
   const threads = getThreads(messages);
   const perPage = state.settings?.maxMessagesPerAccount || 20;
   const totalPages = Math.max(1, Math.ceil(threads.length / perPage));
@@ -597,7 +601,9 @@ export function renderList() {
     const empty = document.createElement('li');
     empty.className = 'empty-state';
     const p = document.createElement('p');
-    p.textContent = 'No unread messages.';
+    p.textContent = state.searchQuery.trim()
+      ? 'No messages match your search.'
+      : 'No unread messages.';
     empty.appendChild(p);
     els.list.appendChild(empty);
     els.pagination.hidden = true;

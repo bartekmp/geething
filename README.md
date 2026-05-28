@@ -20,6 +20,7 @@ A browser extension for multi-account Gmail™ notifications. Get a badge counte
 - **Quick actions** — mark as read, star, archive, move to spam, delete, reply, or open in Gmail™, all without leaving the extension
 - **Conversation threads** — emails that belong to the same Gmail thread are grouped together in the popup; expand a thread inline to see each message individually, with per-message and thread-level actions (reply, star, mark all read, archive all, spam, delete all, open in Gmail™); the detail view shows a collapsible thread context panel so you can jump to any sibling message; threading can be turned off in Settings if you prefer the flat view
 - **Bulk selection** — enter selection mode to pick multiple messages (or whole threads) and mark them read, archive, or delete in one go
+- **Search** — click the looking-glass in the toolbar to filter the active inbox by sender name, sender email, subject, or snippet; search is per inbox and clears when you switch accounts
 - **Notification sounds** — optional audio alert on new mail; choose the built-in sound or upload your own (WAV/MP3/OGG, max 500 KB / 5 s) with adjustable volume
 - **Themes** — light, dark, or auto (follows system preference)
 - **Privacy controls** — optionally block external images in email previews (including tracking pixels); disabled by default so images load normally

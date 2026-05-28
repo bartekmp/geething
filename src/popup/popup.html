@@ -20,6 +20,20 @@
         <span>Geething</span>
       </div>
       <div class="topbar-actions">
+        <button
+          id="search-btn"
+          class="icon-btn"
+          title="Search this inbox"
+          aria-label="Search this inbox"
+          aria-expanded="false"
+          hidden
+        >
+          <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true" fill="currentColor">
+            <path
+              d="M15.5 14h-.79l-.28-.27a6.5 6.5 0 1 0-.7.7l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0A4.5 4.5 0 1 1 14 9.5 4.5 4.5 0 0 1 9.5 14z"
+            />
+          </svg>
+        </button>
         <div id="mute-btn-wrapper" class="mute-btn-wrapper">
           <button
             id="mute-btn"
@@ -105,6 +119,39 @@
     </header>
 
     <nav id="account-tabs" class="account-tabs" role="tablist" aria-label="Gmail accounts"></nav>
+
+    <div id="search-bar" class="search-bar" hidden>
+      <svg
+        class="search-bar-icon"
+        viewBox="0 0 24 24"
+        width="14"
+        height="14"
+        aria-hidden="true"
+        fill="currentColor"
+      >
+        <path
+          d="M15.5 14h-.79l-.28-.27a6.5 6.5 0 1 0-.7.7l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0A4.5 4.5 0 1 1 14 9.5 4.5 4.5 0 0 1 9.5 14z"
+        />
+      </svg>
+      <input
+        id="search-input"
+        type="text"
+        class="search-input"
+        placeholder="Search sender, subject, snippet…"
+        autocomplete="off"
+        spellcheck="false"
+        aria-label="Search this inbox"
+      />
+      <button
+        id="search-clear-btn"
+        type="button"
+        class="search-clear-btn"
+        title="Clear search"
+        aria-label="Clear search"
+      >
+        ✕
+      </button>
+    </div>
 
     <main id="content" class="content">
       <div id="empty-state" class="empty-state" hidden>

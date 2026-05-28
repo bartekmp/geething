@@ -39,3 +39,6 @@ npm-debug.log*
 
 # Local task list
 TODO.md
+
+# Local design/spec docs
+docs/superpowers/

@@ -19,6 +19,7 @@ import {
   updateSelectBtn,
 } from './list.js';
 import { closeMuteDropdown, initMuteUi, registerMuteListeners, updateMuteBtn } from './mute-ui.js';
+import { initSearchUi, registerSearchListeners, updateSearchBtn } from './search-ui.js';
 import { api, dimmedMessages, els, state } from './state.js';
 import { sendMessage, setLoading, showError } from './utils.js';
 
@@ -54,6 +55,7 @@ export async function loadState() {
   updateMarkAllBtn();
   updateSelectBtn();
   updateMuteBtn();
+  updateSearchBtn();
   els.addBtn.hidden = state.accounts.length > 0;
   setLoading(false);
 }
@@ -76,7 +78,9 @@ async function refresh({ silent = false } = {}) {
 initActions({ refresh, loadState });
 initMuteUi({ loadState });
 initList({ loadState });
+initSearchUi({ renderList });
 registerMuteListeners();
+registerSearchListeners();
 
 // ── Detail back button ─────────────────────────────────────────────────────
 els.backBtn.addEventListener('click', () => {
