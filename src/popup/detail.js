@@ -34,45 +34,109 @@ function makeEmailIframe(srcdoc) {
   return iframe;
 }
 
+function buildAttachmentItem(accountId, messageId, att) {
+  const item = document.createElement('button');
+  item.type = 'button';
+  item.className = 'attachment-item';
+  item.title = `Download ${att.filename}`;
+
+  const icon = makeSvgIcon(ICONS[getFileIconKey(att.mimeType)], 16);
+  icon.setAttribute('class', 'attachment-icon');
+
+  const info = document.createElement('span');
+  info.className = 'attachment-info';
+
+  const name = document.createElement('span');
+  name.className = 'attachment-name';
+  name.textContent = att.filename;
+
+  const size = document.createElement('span');
+  size.className = 'attachment-size';
+  size.textContent = att.size ? formatFileSize(att.size) : '';
+
+  info.append(name, size);
+  item.append(icon, info);
+
+  item.addEventListener('click', async () => {
+    item.disabled = true;
+    try {
+      await downloadAttachment(accountId, messageId, att);
+    } catch {
+      // Silently fail — the file icon just stays enabled on next click.
+    } finally {
+      item.disabled = false;
+    }
+  });
+
+  return item;
+}
+
 function renderAttachmentList(accountId, messageId, attachments) {
   const section = document.createElement('div');
   section.className = 'attachment-list';
-  for (const att of attachments) {
-    const item = document.createElement('button');
-    item.type = 'button';
-    item.className = 'attachment-item';
-    item.title = `Download ${att.filename}`;
 
-    const icon = makeSvgIcon(ICONS[getFileIconKey(att.mimeType)], 16);
-    icon.setAttribute('class', 'attachment-icon');
+  if (attachments.length > 2) {
+    const typeCounts = new Map();
+    for (const att of attachments) {
+      const dot = att.filename?.lastIndexOf('.');
+      const ext = dot > 0 ? att.filename.slice(dot + 1).toUpperCase() : null;
+      if (ext) typeCounts.set(ext, (typeCounts.get(ext) || 0) + 1);
+    }
+    const topTypes = [...typeCounts.entries()]
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 3)
+      .map(([ext]) => ext);
 
-    const info = document.createElement('span');
-    info.className = 'attachment-info';
+    const summary = document.createElement('button');
+    summary.type = 'button';
+    summary.className = 'attachment-summary';
+    summary.setAttribute('aria-expanded', 'false');
 
-    const name = document.createElement('span');
-    name.className = 'attachment-name';
-    name.textContent = att.filename;
+    const left = document.createElement('span');
+    left.className = 'attachment-summary-left';
+    const clip = makeSvgIcon(ICONS.paperclip, 14);
+    clip.setAttribute('class', 'attachment-icon');
+    const label = document.createElement('span');
+    label.textContent = `${attachments.length} attachments`;
+    left.append(clip, label);
 
-    const size = document.createElement('span');
-    size.className = 'attachment-size';
-    size.textContent = att.size ? formatFileSize(att.size) : '';
+    const chips = document.createElement('span');
+    chips.className = 'attachment-type-chips';
+    for (const ext of topTypes) {
+      const chip = document.createElement('span');
+      chip.className = 'attachment-type-chip';
+      chip.textContent = ext;
+      chips.appendChild(chip);
+    }
 
-    info.append(name, size);
-    item.append(icon, info);
+    // Chevron path points down (▼); rotate -90deg when collapsed (▶)
+    const chevron = makeSvgIcon('M16.59 8.59L12 13.17 7.41 8.59 6 10l6 6 6-6z', 14);
+    chevron.classList.add('attachment-chevron');
+    chevron.style.transform = 'rotate(-90deg)';
 
-    item.addEventListener('click', async () => {
-      item.disabled = true;
-      try {
-        await downloadAttachment(accountId, messageId, att);
-      } catch {
-        // Silently fail — the file icon just stays enabled on next click.
-      } finally {
-        item.disabled = false;
-      }
+    summary.append(left, chips, chevron);
+    section.appendChild(summary);
+
+    const expandList = document.createElement('div');
+    expandList.className = 'attachment-expand-list';
+    expandList.hidden = true;
+    for (const att of attachments) {
+      expandList.appendChild(buildAttachmentItem(accountId, messageId, att));
+    }
+    section.appendChild(expandList);
+
+    summary.addEventListener('click', () => {
+      const nowHidden = !expandList.hidden;
+      expandList.hidden = nowHidden;
+      chevron.style.transform = nowHidden ? 'rotate(-90deg)' : '';
+      summary.setAttribute('aria-expanded', String(!nowHidden));
     });
-
-    section.appendChild(item);
+  } else {
+    for (const att of attachments) {
+      section.appendChild(buildAttachmentItem(accountId, messageId, att));
+    }
   }
+
   return section;
 }
 
