@@ -3,6 +3,14 @@
 All notable changes to Geething are documented here.
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/). Versioning follows [Semantic Versioning](https://semver.org/).
 
+## [0.10.0](https://github.com/bartekmp/geething/compare/geething-v0.9.1...geething-v0.10.0) (2026-06-03)
+
+
+### Features
+
+* **detail:** collapse attachments when count exceeds 2 ([#54](https://github.com/bartekmp/geething/issues/54)) ([f7d5468](https://github.com/bartekmp/geething/commit/f7d546867e7d28df34434cb444d09d8f3baa58de))
+* per-inbox search ([#52](https://github.com/bartekmp/geething/issues/52)) ([d54f646](https://github.com/bartekmp/geething/commit/d54f646973aab36ca77738f0cd2abeb05b018c7b))
+
 ## [0.9.1](https://github.com/bartekmp/geething/compare/geething-v0.9.0...geething-v0.9.1) (2026-05-27)
 
 
