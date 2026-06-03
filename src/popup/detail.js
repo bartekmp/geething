@@ -80,7 +80,7 @@ function renderAttachmentList(accountId, messageId, attachments) {
     for (const att of attachments) {
       const dot = att.filename?.lastIndexOf('.');
       const ext = dot > 0 ? att.filename.slice(dot + 1).toUpperCase() : null;
-      if (ext) typeCounts.set(ext, (typeCounts.get(ext) || 0) + 1);
+      if (ext) { typeCounts.set(ext, (typeCounts.get(ext) || 0) + 1); }
     }
     const topTypes = [...typeCounts.entries()]
       .sort((a, b) => b[1] - a[1])
