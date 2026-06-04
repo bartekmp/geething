@@ -699,6 +699,11 @@ body {
   cursor: wait;
 }
 
+.attachment-item--error {
+  border-color: var(--danger);
+  color: var(--danger);
+}
+
 .attachment-icon {
   color: var(--text-secondary);
   flex-shrink: 0;

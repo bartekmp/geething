@@ -22,7 +22,8 @@
     "storage",
     "alarms",
     "notifications",
-    "contextMenus"
+    "contextMenus",
+    "downloads"
   ],
   "host_permissions": [
     "https://www.googleapis.com/*",
