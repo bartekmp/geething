@@ -59,10 +59,12 @@ function buildAttachmentItem(accountId, messageId, att) {
 
   item.addEventListener('click', async () => {
     item.disabled = true;
+    item.classList.remove('attachment-item--error');
     try {
       await downloadAttachment(accountId, messageId, att);
-    } catch {
-      // Silently fail — the file icon just stays enabled on next click.
+    } catch (err) {
+      console.error('Attachment download failed:', err);
+      item.classList.add('attachment-item--error');
     } finally {
       item.disabled = false;
     }

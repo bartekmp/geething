@@ -81,13 +81,15 @@ export async function downloadAttachment(accountId, messageId, attachment) {
   }
   const blob = new Blob([bytes], { type: attachment.mimeType || 'application/octet-stream' });
   const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = attachment.filename || 'attachment';
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
-  setTimeout(() => URL.revokeObjectURL(url), 1000);
+  try {
+    await api.downloads.download({
+      url,
+      filename: attachment.filename || 'attachment',
+      saveAs: false,
+    });
+  } finally {
+    setTimeout(() => URL.revokeObjectURL(url), 5000);
+  }
 }
 
 export async function bulkAction(action) {
