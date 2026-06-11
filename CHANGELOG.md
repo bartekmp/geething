@@ -3,6 +3,13 @@
 All notable changes to Geething are documented here.
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/). Versioning follows [Semantic Versioning](https://semver.org/).
 
+## [0.10.1](https://github.com/bartekmp/geething/compare/geething-v0.10.0...geething-v0.10.1) (2026-06-04)
+
+
+### Bug Fixes
+
+* **attachments:** use downloads API instead of a.click() in popup ([#55](https://github.com/bartekmp/geething/issues/55)) ([668c3a7](https://github.com/bartekmp/geething/commit/668c3a74c5647239855414147835e3a10cc6a323))
+
 ## [0.10.0](https://github.com/bartekmp/geething/compare/geething-v0.9.1...geething-v0.10.0) (2026-06-03)
 
 
