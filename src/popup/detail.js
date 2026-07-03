@@ -29,7 +29,9 @@ export function renderLoadingInto(node) {
 
 function makeEmailIframe(srcdoc) {
   const iframe = document.createElement('iframe');
-  iframe.setAttribute('sandbox', 'allow-popups');
+  // Without allow-popups-to-escape-sandbox, links opened via target="_blank"
+  // inherit this frame's opaque (null) origin, which trips CORS checks
+  iframe.setAttribute('sandbox', 'allow-popups allow-popups-to-escape-sandbox');
   iframe.srcdoc = srcdoc;
   return iframe;
 }
