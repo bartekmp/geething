@@ -3,6 +3,13 @@
 All notable changes to Geething are documented here.
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/). Versioning follows [Semantic Versioning](https://semver.org/).
 
+## [0.10.2](https://github.com/bartekmp/geething/compare/geething-v0.10.1...geething-v0.10.2) (2026-07-03)
+
+
+### Bug Fixes
+
+* allow escaping sandbox for opening links ([#57](https://github.com/bartekmp/geething/issues/57)) ([523fc9b](https://github.com/bartekmp/geething/commit/523fc9b999977205bf36e539de2edde09d9bc171))
+
 ## [0.10.1](https://github.com/bartekmp/geething/compare/geething-v0.10.0...geething-v0.10.1) (2026-06-04)
 
 
